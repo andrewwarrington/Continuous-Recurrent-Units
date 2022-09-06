@@ -371,8 +371,8 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
         if imagepred:
             test_obs_valid_sub[i, ...] = test_obs_valid[i, choice, ...]
 
-    train_time_points, test_time_points = np.stack(
-        train_time_points, 0), np.stack(test_time_points, 0)
+    train_time_points, valid_time_points, test_time_points = np.stack(
+        train_time_points, 0), np.stack(valid_time_points, 0), np.stack(test_time_points, 0)
 
     if imagepred:
         return train_obs_sub, train_targets_sub, train_time_points, train_obs_valid_sub, \
