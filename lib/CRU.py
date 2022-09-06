@@ -513,10 +513,10 @@ class CRU(nn.Module):
                                    imput_metrics=test_imput_metrics,
                                    log_rythm=self.args.log_rythm)
 
-            if valid_ll > best_valid_ll:
+            if valid_ll < best_valid_ll:
                 best_train_ll, best_valid_ll, best_test_ll = train_ll, valid_ll, test_ll
 
-            if valid_mse > best_valid_mse:
+            if valid_mse < best_valid_mse:
                 best_train_mse, best_valid_mse, best_test_mse = train_mse, valid_mse, test_mse
 
             end = datetime.now()
@@ -526,9 +526,9 @@ class CRU(nn.Module):
             logger.info(f' valid_nll: {valid_ll:3f}, valid_mse: {valid_mse:3f}')
             logger.info(f' test_nll:  {test_ll:3f}, test_mse:  {test_mse:3f}')
 
-            logger.info(f' best_train_ll:   {best_train_ll:3f}, '
-                        f'best_valid_ll:   {best_valid_ll:3f}, '
-                        f'best_test_ll:   {best_test_ll:3f}')
+            logger.info(f' best_train_nll:   {best_train_ll:3f}, '
+                        f'best_valid_nll:   {best_valid_ll:3f}, '
+                        f'best_test_nll:   {best_test_ll:3f}')
 
             logger.info(f' best_train_mse:  {best_train_mse:3f}, '
                         f'best_valid_mse:  {best_valid_mse:3f}, '
