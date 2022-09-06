@@ -514,10 +514,16 @@ class CRU(nn.Module):
                                    log_rythm=self.args.log_rythm)
 
             if valid_ll < best_valid_ll:
+                improved_ll = True
                 best_train_ll, best_valid_ll, best_test_ll = train_ll, valid_ll, test_ll
+            else:
+                improved_ll = False
 
             if valid_mse < best_valid_mse:
+                improved_mse = True
                 best_train_mse, best_valid_mse, best_test_mse = train_mse, valid_mse, test_mse
+            else:
+                improved_mse = False
 
             end = datetime.now()
             logger.info(f'Training epoch {epoch} took: {(end_training - start).total_seconds()}')
@@ -526,13 +532,15 @@ class CRU(nn.Module):
             logger.info(f' valid_nll: {valid_ll: >3f}, valid_mse: {valid_mse: >3f}')
             logger.info(f' test_nll:  {test_ll: >3f}, test_mse:  {test_mse: >3f}')
 
-            logger.info(f' best_train_nll:   {best_train_ll: >3f}, '
-                        f'best_valid_nll:   {best_valid_ll: >3f}, '
-                        f'best_test_nll:   {best_test_ll: >3f}')
+            if improved_ll:
+                logger.info(f' best_train_nll:   {best_train_ll: >3f}, '
+                            f'best_valid_nll:   {best_valid_ll: >3f}, '
+                            f'best_test_nll:   {best_test_ll: >3f}')
 
-            logger.info(f' best_train_mse:  {best_train_mse: >3f}, '
-                        f'best_valid_mse:  {best_valid_mse: >3f}, '
-                        f'best_test_mse:  {best_test_mse: >3f}')
+            if improved_mse:
+                logger.info(f' best_train_mse:  {best_train_mse: >3f}, '
+                            f'best_valid_mse:  {best_valid_mse: >3f}, '
+                            f'best_test_mse:  {best_test_mse: >3f}')
 
             if self.args.task == 'extrapolation' or self.args.impute_rate is not None:
                 if self.bernoulli_output:
