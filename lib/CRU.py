@@ -526,11 +526,11 @@ class CRU(nn.Module):
             logger.info(f' valid_nll: {valid_ll:3f}, valid_mse: {valid_mse:3f}')
             logger.info(f' test_nll:  {test_ll:3f}, test_mse:  {test_mse:3f}')
 
-            logger.info(f' best_train_ll:  {best_test_ll:3f}, '
-                        f'best_valid_ll:  {best_valid_ll:3f}, '
-                        f'best_test_ll:  {best_test_ll:3f}')
+            logger.info(f' best_train_ll:   {best_train_ll:3f}, '
+                        f'best_valid_ll:   {best_valid_ll:3f}, '
+                        f'best_test_ll:   {best_test_ll:3f}')
 
-            logger.info(f' best_train_mse:  {best_test_mse:3f}, '
+            logger.info(f' best_train_mse:  {best_train_mse:3f}, '
                         f'best_valid_mse:  {best_valid_mse:3f}, '
                         f'best_test_mse:  {best_test_mse:3f}')
 
