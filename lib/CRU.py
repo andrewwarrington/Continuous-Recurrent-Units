@@ -451,12 +451,12 @@ class CRU(nn.Module):
         """
 
         # Add some cheap logging of performance.
-        best_train_ll = -np.inf
-        best_valid_ll = -np.inf
-        best_test_ll = -np.inf
-        best_train_mse = - np.inf
-        best_valid_mse = - np.inf
-        best_test_mse = - np.inf
+        best_train_ll = np.inf
+        best_valid_ll = np.inf
+        best_test_ll = np.inf
+        best_train_mse = np.inf
+        best_valid_mse = np.inf
+        best_test_mse = np.inf
 
         optimizer = optim.Adam(self.parameters(), self.args.lr)
         def lr_update(epoch): return self.args.lr_decay ** epoch
