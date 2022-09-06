@@ -40,6 +40,8 @@ def load_data(args):
                     mode='train', sample_rate=args.sample_rate, random_state=args.data_random_seed)
             valid = Pendulum_interpolation(file_path=file_path, name=f'pend_interpolation_ir{args.impute_rate}.npz', 
                     mode='valid', sample_rate=args.sample_rate, random_state=args.data_random_seed)
+            test = Pendulum_interpolation(file_path=file_path, name=f'pend_interpolation_ir{args.impute_rate}.npz',
+                    mode='test', sample_rate=args.sample_rate, random_state=args.data_random_seed)
         
         elif args.task =='regression':
             if not os.path.exists(os.path.join(file_path, 'pend_regression.npz')):
@@ -50,6 +52,8 @@ def load_data(args):
                                mode='train', sample_rate=args.sample_rate, random_state=args.data_random_seed)
             valid = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
                                mode='valid', sample_rate=args.sample_rate, random_state=args.data_random_seed)
+            test = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
+                               mode='test', sample_rate=args.sample_rate, random_state=args.data_random_seed)
         else:
             raise Exception('Task not available for Pendulum data')
         collate_fn = None
@@ -64,6 +68,7 @@ def load_data(args):
                      impute_rate=args.impute_rate, sample_rate=args.sample_rate)
         valid = USHCN(file_path=file_path, name='pivot_test_1990_1993_thr4_normalize.csv', unobserved_rate=args.unobserved_rate,
                      impute_rate=args.impute_rate, sample_rate=args.sample_rate)
+        test = None
         collate_fn = None
     
     # Physionet
@@ -74,12 +79,18 @@ def load_data(args):
 
         train = Physionet(file_path=file_path, name='norm_train_valid.pt')
         valid = Physionet(file_path=file_path, name='norm_test.pt')
+        test = None
         collate_fn = collate_fn_physionet
     
     train_dl = DataLoader(train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
     valid_dl = DataLoader(valid, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
-    return train_dl, valid_dl
+    if test is not None:
+        test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
+    else:
+        test_dl = None
+
+    return train_dl, valid_dl, test_dl
 
 
 # new code component 
@@ -88,6 +99,7 @@ class Pendulum_interpolation(Dataset):
 
         data = dict(np.load(os.path.join(file_path, name)))
         train_obs, train_targets, train_time_points, train_obs_valid, \
+            valid_obs, valid_targets, valid_time_points, valid_obs_valid, \
             test_obs, test_targets, test_time_points, test_obs_valid = subsample(
                 data, sample_rate=sample_rate, imagepred=True, random_state=random_state)
 
@@ -96,12 +108,18 @@ class Pendulum_interpolation(Dataset):
             self.targets = train_targets
             self.obs_valid = train_obs_valid
             self.time_points = train_time_points
-
-        else:
+        elif mode == 'valid':
+            self.obs = valid_obs
+            self.targets = valid_targets
+            self.obs_valid = valid_obs_valid
+            self.time_points = valid_time_points
+        elif mode == 'test':
             self.obs = test_obs
             self.targets = test_targets
             self.obs_valid = test_obs_valid
             self.time_points = test_time_points
+        else:
+            raise RuntimeError(f"Mode {mode} not recognised (allowable values: ['train', 'valid', 'test']).")
 
         self.obs = np.ascontiguousarray(
             np.transpose(self.obs, [0, 1, 4, 2, 3]))/255.0
@@ -126,18 +144,24 @@ class Pendulum_regression(Dataset):
     def __init__(self, file_path, name, mode, sample_rate=0.5, random_state=0):
 
         data = dict(np.load(os.path.join(file_path, name)))
-        train_obs, train_targets, test_obs, test_targets, train_time_points, \
-            test_time_points = subsample(
-                data, sample_rate=sample_rate, random_state=random_state)
+        train_obs, train_targets, valid_obs, valid_targets, test_obs, test_targets, \
+        train_time_points, valid_time_points, test_time_points = subsample(
+            data, sample_rate=sample_rate, random_state=random_state)
 
         if mode == 'train':
             self.obs = train_obs
             self.targets = train_targets
             self.time_points = train_time_points
-        else:
+        elif mode == 'valid':
+            self.obs = valid_obs
+            self.targets = valid_targets
+            self.time_points = valid_time_points
+        elif mode == 'test':
             self.obs = test_obs
             self.targets = test_targets
             self.time_points = test_time_points
+        else:
+            raise RuntimeError(f"Mode {mode} not recognised.")
 
         self.obs = np.ascontiguousarray(
             np.transpose(self.obs, [0, 1, 4, 2, 3]))/255.0
@@ -292,22 +316,32 @@ def collate_fn_physionet(batch):
 
 # new code component 
 def subsample(data, sample_rate, imagepred=False, random_state=0):
-    train_obs, train_targets, test_obs, test_targets = data["train_obs"], \
-        data["train_targets"], data["test_obs"], data["test_targets"]
+    train_obs, train_targets = data["train_obs"], data["train_targets"]
+    valid_obs, valid_targets = data["valid_obs"], data["valid_targets"]
+    test_obs, test_targets = data["test_obs"], data["test_targets"]
+
     seq_length = train_obs.shape[1]
     train_time_points = []
+    valid_time_points = []
     test_time_points = []
     n = int(sample_rate*seq_length)
 
     if imagepred:
         train_obs_valid = data["train_obs_valid"]
+        data_components = train_obs, train_targets, train_obs_valid
+        train_obs_sub, train_targets_sub, train_obs_valid_sub = [np.zeros_like(x[:, :n, ...]) for x in data_components]
+
+        valid_obs_valid = data["valid_obs_valid"]
+        data_components = valid_obs, valid_targets, valid_obs_valid
+        valid_obs_sub, valid_targets_sub, valid_obs_valid_sub = [np.zeros_like(x[:, :n, ...]) for x in data_components]
+
         test_obs_valid = data["test_obs_valid"]
-        data_components = train_obs, train_targets, test_obs, test_targets, train_obs_valid, test_obs_valid
-        train_obs_sub, train_targets_sub, test_obs_sub, test_targets_sub, train_obs_valid_sub, test_obs_valid_sub = [
-            np.zeros_like(x[:, :n, ...]) for x in data_components]
+        data_components = test_obs, test_targets, test_obs_valid
+        test_obs_sub, test_targets_sub, test_obs_valid_sub = [np.zeros_like(x[:, :n, ...]) for x in data_components]
+
     else:
-        data_components = train_obs, train_targets, test_obs, test_targets
-        train_obs_sub, train_targets_sub, test_obs_sub, test_targets_sub = [
+        data_components = train_obs, train_targets, valid_obs, valid_targets, test_obs, test_targets
+        train_obs_sub, train_targets_sub, valid_obs_sub, valid_targets_sub, test_obs_sub, test_targets_sub = [
             np.zeros_like(x[:, :n, ...]) for x in data_components]
 
     for i in range(train_obs.shape[0]):
@@ -318,6 +352,15 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
             x[i, choice, ...] for x in [train_obs, train_targets]]
         if imagepred:
             train_obs_valid_sub[i, ...] = train_obs_valid[i, choice, ...]
+
+    for i in range(valid_obs.shape[0]):
+        rng_valid = np.random.default_rng(random_state+i)
+        choice = np.sort(rng_valid.choice(seq_length, n, replace=False))
+        valid_time_points.append(choice)
+        valid_obs_sub[i, ...], valid_targets_sub[i, ...] = [
+            x[i, choice, ...] for x in [valid_obs, valid_targets]]
+        if imagepred:
+            valid_obs_valid_sub[i, ...] = valid_obs_valid[i, choice, ...]
 
     for i in range(test_obs.shape[0]):
         rng_test = np.random.default_rng(random_state+i)
@@ -332,9 +375,12 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
         train_time_points, 0), np.stack(test_time_points, 0)
 
     if imagepred:
-        return train_obs_sub, train_targets_sub, train_time_points, train_obs_valid_sub, test_obs_sub, test_targets_sub, test_time_points, test_obs_valid_sub
+        return train_obs_sub, train_targets_sub, train_time_points, train_obs_valid_sub, \
+               valid_obs_sub, valid_targets_sub, valid_time_points, valid_obs_valid_sub, \
+               test_obs_sub, test_targets_sub, test_time_points, test_obs_valid_sub
     else:
-        return train_obs_sub, train_targets_sub, test_obs_sub, test_targets_sub, train_time_points, test_time_points
+        return train_obs_sub, train_targets_sub, valid_obs_sub, valid_targets_sub, test_obs_sub, test_targets_sub, \
+               train_time_points, valid_time_points, test_time_points
 
 
 

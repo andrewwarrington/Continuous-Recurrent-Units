@@ -90,11 +90,11 @@ if __name__ == '__main__':
 	logger = get_logger(logpath=log_path, filepath=os.path.abspath(__file__))
 	logger.info(input_command)
 	
-	train_dl, valid_dl = load_data(args)
+	train_dl, valid_dl, test_dl = load_data(args)
 	model = load_model(args)
 	logger.info(f'parameters: {count_parameters(model)}')
 
-	model.train(train_dl=train_dl, valid_dl=valid_dl,
+	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl,
 			    identifier=identifier, logger=logger)
 
 

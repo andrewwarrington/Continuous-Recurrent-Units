@@ -439,15 +439,24 @@ class CRU(nn.Module):
         return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics
 
     # new code component
-    def train(self, train_dl, valid_dl, identifier, logger, epoch_start=0):
+    def train(self, train_dl, valid_dl, test_dl, identifier, logger, epoch_start=0):
         """Trains model on trainset and evaluates on test data. Logs results and saves trained model.
 
         :param train_dl: training dataloader
         :param valid_dl: validation dataloader
+        :param test_dl: test dataloader
         :param identifier: logger id
         :param logger: logger object
         :param epoch_start: starting epoch
         """
+
+        # Add some cheap logging of performance.
+        best_train_ll = -np.inf
+        best_valid_ll = -np.inf
+        best_test_ll = -np.inf
+        best_train_mse = - np.inf
+        best_valid_mse = - np.inf
+        best_test_mse = - np.inf
 
         optimizer = optim.Adam(self.parameters(), self.args.lr)
         def lr_update(epoch): return self.args.lr_decay ** epoch
@@ -490,19 +499,51 @@ class CRU(nn.Module):
                                 imput_metrics=valid_imput_metrics,
                                 log_rythm=self.args.log_rythm)
 
+            # test
+            test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics = self.eval_epoch(
+                test_dl)
+            if self.args.tensorboard:
+                log_to_tensorboard(self, writer=writer,
+                                   mode='test',
+                                   metrics=[test_ll, test_rmse, test_mse],
+                                   output=test_output,
+                                   input=test_input,
+                                   intermediates=intermediates,
+                                   epoch=epoch,
+                                   imput_metrics=test_imput_metrics,
+                                   log_rythm=self.args.log_rythm)
+
+            if valid_ll > best_valid_ll:
+                best_train_ll, best_valid_ll, best_test_ll = train_ll, valid_ll, test_ll
+
+            if valid_mse > best_valid_mse:
+                best_train_mse, best_valid_mse, best_test_mse = train_mse, valid_mse, test_mse
+
             end = datetime.now()
             logger.info(f'Training epoch {epoch} took: {(end_training - start).total_seconds()}')
             logger.info(f'Epoch {epoch} took: {(end - start).total_seconds()}')
             logger.info(f' train_nll: {train_ll:3f}, train_mse: {train_mse:3f}')
             logger.info(f' valid_nll: {valid_ll:3f}, valid_mse: {valid_mse:3f}')
+            logger.info(f' test_nll:  {test_ll:3f}, test_mse:  {test_mse:3f}')
+
+            logger.info(f' best_train_ll:  {best_test_ll:3f}, '
+                        f'best_valid_ll:  {best_valid_ll:3f}, '
+                        f'best_test_ll:  {best_test_ll:3f}')
+
+            logger.info(f' best_train_mse:  {best_test_mse:3f}, '
+                        f'best_valid_mse:  {best_valid_mse:3f}, '
+                        f'best_test_mse:  {best_test_mse:3f}')
+
             if self.args.task == 'extrapolation' or self.args.impute_rate is not None:
                 if self.bernoulli_output:
                     logger.info(f' train_mse_imput: {train_imput_metrics[1]:3f}')
                     logger.info(f' valid_mse_imput: {valid_imput_metrics[1]:3f}')
+                    logger.info(f' test_mse_imput:  {test_imput_metrics[1]:3f}')
                 else:
                     logger.info(f' train_nll_imput: {train_imput_metrics[0]:3f}, train_mse_imput: {train_imput_metrics[1]:3f}')
                     logger.info(f' valid_nll_imput: {valid_imput_metrics[0]:3f}, valid_mse_imput: {valid_imput_metrics[1]:3f}')
-
+                    logger.info(f' test_nll_imput:  {test_imput_metrics[0]:3f}, test_mse_imput:  {test_imput_metrics[1]:3f}')
+            logger.info('\n')
             scheduler.step()
         
         make_dir(f'../results/models/{self.args.dataset}')
