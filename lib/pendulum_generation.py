@@ -506,7 +506,7 @@ def generate_pendulums(file_path, task, impute_rate=0.5):
 
         # Gen validation (added).
         valid_obs, valid_targets, _, _, valid_ts = pendulum.sample_data_set(
-            2000, n, full_targets=False)
+            1000, n, full_targets=False)
         valid_obs, _ = pendulum.add_observation_noise(valid_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
                                                       t_uu=1.0)
         valid_obs = np.expand_dims(valid_obs, -1)
