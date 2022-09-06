@@ -534,9 +534,9 @@ class CRU(nn.Module):
                             f'best_test_nll:   {best_test_ll: >8.3f}')
 
             if improved_mse:
-                logger.info(f' best_train_mse:  {best_train_mse: >8.3f}, '
-                            f'best_valid_mse:  {best_valid_mse: >8.3f}, '
-                            f'best_test_mse:  {best_test_mse: >8.3f}')
+                logger.info(f' best_train_mse:   {best_train_mse: >8.3f}, '
+                            f'best_valid_mse:   {best_valid_mse: >8.3f}, '
+                            f'best_test_mse:   {best_test_mse: >8.3f}')
 
             if self.args.task == 'extrapolation' or self.args.impute_rate is not None:
                 if self.bernoulli_output:
@@ -554,9 +554,9 @@ class CRU(nn.Module):
                     f'best_valid_nll:   {best_valid_ll: >8.3f}, '
                     f'best_test_nll:   {best_test_ll: >8.3f}')
 
-        logger.info(f' best_train_mse:  {best_train_mse: >8.3f}, '
-                    f'best_valid_mse:  {best_valid_mse: >8.3f}, '
-                    f'best_test_mse:  {best_test_mse: >8.3f}')
+        logger.info(f' best_train_mse:   {best_train_mse: >8.3f}, '
+                    f'best_valid_mse:   {best_valid_mse: >8.3f}, '
+                    f'best_test_mse:   {best_test_mse: >8.3f}')
         
         make_dir(f'../results/models/{self.args.dataset}')
         torch.save({'epoch': epoch,
