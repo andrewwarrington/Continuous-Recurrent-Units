@@ -510,30 +510,20 @@ class CRU(nn.Module):
                                    imput_metrics=test_imput_metrics,
                                    log_rythm=self.args.log_rythm)
 
-            if valid_ll < best_valid_ll:
-                improved_ll = True
-                best_train_ll, best_valid_ll, best_test_ll = train_ll, valid_ll, test_ll
-            else:
-                improved_ll = False
-
             if valid_mse < best_valid_mse:
                 improved_mse = True
                 best_train_mse, best_valid_mse, best_test_mse = train_mse, valid_mse, test_mse
+                best_train_ll, best_valid_ll, best_test_ll = train_ll, valid_ll, test_ll
             else:
                 improved_mse = False
 
             end = datetime.now()
-            logger.info(f'Training epoch {epoch} took: {(end_training - start).total_seconds()}')
+            train_epoch_time = (end_training - start).total_seconds()
+            logger.info(f'Training epoch {epoch} took: {train_epoch_time}')
             logger.info(f'Epoch {epoch} took: {(end - start).total_seconds()}')
             logger.info(f' train_nll: {train_ll: >9.7f}, train_mse: {train_mse: >9.7f}')
             logger.info(f' valid_nll: {valid_ll: >9.7f}, valid_mse: {valid_mse: >9.7f}')
             logger.info(f' test_nll:  {test_ll: >9.7f}, test_mse:  {test_mse: >9.7f}')
-
-            # if improved_ll:
-            logger.info(f' Improved: {improved_ll}, '
-                        f'best_train_nll:   {best_train_ll: >9.7f}, '
-                        f'best_valid_nll:   {best_valid_ll: >9.7f}, '
-                        f'best_test_nll:   {best_test_ll: >9.7f}')
 
             # if improved_mse:
             logger.info(f' Improved: {improved_mse}, '
@@ -561,14 +551,14 @@ class CRU(nn.Module):
                 'train_mse': train_mse,
                 'valid_mse': valid_mse,
                 'test_mse': test_mse,
-                'improved_ll': improved_ll,
                 'best_train_ll': best_train_ll,
                 'best_valid_ll': best_valid_ll,
                 'best_test_ll': best_test_ll,
                 'improved_mse': improved_mse,
                 'best_train_mse': best_train_mse,
                 'best_valid_mse': best_valid_mse,
-                'best_test_mse': best_test_mse, 
+                'best_test_mse': best_test_mse,
+                'train_epoch_time': train_epoch_time
             })
 
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
