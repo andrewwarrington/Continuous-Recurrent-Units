@@ -22,6 +22,7 @@ import datetime
 import numpy as np
 import sys
 import os
+import wandb
 
 parser = argparse.ArgumentParser('CRU')
 # train configs
@@ -66,6 +67,10 @@ parser.add_argument('--pin-memory', type=bool, default=True, help="If to pin mem
 parser.add_argument('--data-random-seed', type=int, default=0, help="Random seed for subsampling timepoints and features.")
 parser.add_argument('-rs', '--random-seed', type=int, default=0, help="Random seed for initializing model parameters.")
 
+parser.add_argument('--USE-WANDB', type=int, default=1, help="Log to wandb.")
+parser.add_argument("--wandb-project", type=str, default="CRU")
+parser.add_argument("--wandb-entity", type=str, default="nlb")
+
 
 args = parser.parse_args()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -89,13 +94,17 @@ if __name__ == '__main__':
 
 	logger = get_logger(logpath=log_path, filepath=os.path.abspath(__file__))
 	logger.info(input_command)
-	
+
+	if args.USE_WANDB:
+		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity)
+	else:
+		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity, mode='offline')
+
 	train_dl, valid_dl, test_dl = load_data(args)
 	model = load_model(args)
 	logger.info(f'parameters: {count_parameters(model)}')
 
-	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl,
-			    identifier=identifier, logger=logger)
+	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl, identifier=identifier, logger=logger)
 
 
 

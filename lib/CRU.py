@@ -24,6 +24,7 @@ import numpy as np
 import time as t
 from datetime import datetime
 import os
+import wandb
 from typing import Tuple
 from torch.utils.tensorboard import SummaryWriter
 from lib.utils import TimeDistributed, log_to_tensorboard, make_dir
@@ -524,39 +525,59 @@ class CRU(nn.Module):
             end = datetime.now()
             logger.info(f'Training epoch {epoch} took: {(end_training - start).total_seconds()}')
             logger.info(f'Epoch {epoch} took: {(end - start).total_seconds()}')
-            logger.info(f' train_nll: {train_ll: >8.3f}, train_mse: {train_mse: >8.3f}')
-            logger.info(f' valid_nll: {valid_ll: >8.3f}, valid_mse: {valid_mse: >8.3f}')
-            logger.info(f' test_nll:  {test_ll: >8.3f}, test_mse:  {test_mse: >8.3f}')
+            logger.info(f' train_nll: {train_ll: >9.7f}, train_mse: {train_mse: >9.7f}')
+            logger.info(f' valid_nll: {valid_ll: >9.7f}, valid_mse: {valid_mse: >9.7f}')
+            logger.info(f' test_nll:  {test_ll: >9.7f}, test_mse:  {test_mse: >9.7f}')
 
-            if improved_ll:
-                logger.info(f' best_train_nll:   {best_train_ll: >8.3f}, '
-                            f'best_valid_nll:   {best_valid_ll: >8.3f}, '
-                            f'best_test_nll:   {best_test_ll: >8.3f}')
+            # if improved_ll:
+            logger.info(f' Improved: {improved_ll}, '
+                        f'best_train_nll:   {best_train_ll: >9.7f}, '
+                        f'best_valid_nll:   {best_valid_ll: >9.7f}, '
+                        f'best_test_nll:   {best_test_ll: >9.7f}')
 
-            if improved_mse:
-                logger.info(f' best_train_mse:   {best_train_mse: >8.3f}, '
-                            f'best_valid_mse:   {best_valid_mse: >8.3f}, '
-                            f'best_test_mse:   {best_test_mse: >8.3f}')
+            # if improved_mse:
+            logger.info(f' Improved: {improved_mse}, '
+                        f'best_train_mse:   {best_train_mse: >9.7f}, '
+                        f'best_valid_mse:   {best_valid_mse: >9.7f}, '
+                        f'best_test_mse:   {best_test_mse: >9.7f}')
 
             if self.args.task == 'extrapolation' or self.args.impute_rate is not None:
                 if self.bernoulli_output:
-                    logger.info(f' train_mse_imput: {train_imput_metrics[1]: >8.3f}')
-                    logger.info(f' valid_mse_imput: {valid_imput_metrics[1]: >8.3f}')
-                    logger.info(f' test_mse_imput:  {test_imput_metrics[1]: >8.3f}')
+                    logger.info(f' train_mse_imput: {train_imput_metrics[1]: >9.7f}')
+                    logger.info(f' valid_mse_imput: {valid_imput_metrics[1]: >9.7f}')
+                    logger.info(f' test_mse_imput:  {test_imput_metrics[1]: >9.7f}')
                 else:
-                    logger.info(f' train_nll_imput: {train_imput_metrics[0]: >8.3f}, train_mse_imput: {train_imput_metrics[1]: >8.3f}')
-                    logger.info(f' valid_nll_imput: {valid_imput_metrics[0]: >8.3f}, valid_mse_imput: {valid_imput_metrics[1]: >8.3f}')
-                    logger.info(f' test_nll_imput:  {test_imput_metrics[0]: >8.3f}, test_mse_imput:  {test_imput_metrics[1]: >8.3f}')
-            logger.info('\n')
+                    logger.info(f' train_nll_imput: {train_imput_metrics[0]: >9.7f}, train_mse_imput: {train_imput_metrics[1]: >9.7f}')
+                    logger.info(f' valid_nll_imput: {valid_imput_metrics[0]: >9.7f}, valid_mse_imput: {valid_imput_metrics[1]: >9.7f}')
+                    logger.info(f' test_nll_imput:  {test_imput_metrics[0]: >9.7f}, test_mse_imput:  {test_imput_metrics[1]: >9.7f}')
+            # logger.info('\n')
             scheduler.step()
 
-        logger.info(f' best_train_nll:   {best_train_ll: >8.3f}, '
-                    f'best_valid_nll:   {best_valid_ll: >8.3f}, '
-                    f'best_test_nll:   {best_test_ll: >8.3f}')
+            wandb.log({
+                'epoch': epoch,
+                'train_ll': train_ll,
+                'valid_ll': valid_ll,
+                'test_ll': test_ll,
+                'train_mse': train_mse,
+                'valid_mse': valid_mse,
+                'test_mse': test_mse,
+                'improved_ll': improved_ll,
+                'best_train_ll': best_train_ll,
+                'best_valid_ll': best_valid_ll,
+                'best_test_ll': best_test_ll,
+                'improved_mse': improved_mse,
+                'best_train_mse': best_train_mse,
+                'best_valid_mse': best_valid_mse,
+                'best_test_mse': best_test_mse, 
+            })
 
-        logger.info(f' best_train_mse:   {best_train_mse: >8.3f}, '
-                    f'best_valid_mse:   {best_valid_mse: >8.3f}, '
-                    f'best_test_mse:   {best_test_mse: >8.3f}')
+        logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
+                    f'best_valid_nll:   {best_valid_ll: >9.7f}, '
+                    f'best_test_nll:   {best_test_ll: >9.7f}')
+
+        logger.info(f' best_train_mse:   {best_train_mse: >9.7f}, '
+                    f'best_valid_mse:   {best_valid_mse: >9.7f}, '
+                    f'best_test_mse:   {best_test_mse: >9.7f}')
         
         make_dir(f'../results/models/{self.args.dataset}')
         torch.save({'epoch': epoch,

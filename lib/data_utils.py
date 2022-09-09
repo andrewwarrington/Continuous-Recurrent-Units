@@ -83,10 +83,10 @@ def load_data(args):
         collate_fn = collate_fn_physionet
     
     train_dl = DataLoader(train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
-    valid_dl = DataLoader(valid, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
+    valid_dl = DataLoader(valid, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
     if test is not None:
-        test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
+        test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
     else:
         test_dl = None
 
