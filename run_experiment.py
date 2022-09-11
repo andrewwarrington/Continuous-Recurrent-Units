@@ -70,7 +70,7 @@ parser.add_argument('-rs', '--random-seed', type=int, default=0, help="Random se
 parser.add_argument('--USE-WANDB', type=int, default=1, help="Log to wandb.")
 parser.add_argument("--wandb-project", type=str, default="CRU")
 parser.add_argument("--wandb-entity", type=str, default="nlb")
-
+parser.add_argument("--method", type=str, default="CRU")
 
 args = parser.parse_args()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

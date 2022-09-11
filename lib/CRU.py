@@ -483,32 +483,33 @@ class CRU(nn.Module):
                                 log_rythm=self.args.log_rythm)
 
             # eval
-            valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics = self.eval_epoch(
-                valid_dl)
-            if self.args.tensorboard:
-                log_to_tensorboard(self, writer=writer,
-                                mode='valid',
-                                metrics=[valid_ll, valid_rmse, valid_mse],
-                                output=valid_output,
-                                input=valid_input,
-                                intermediates=intermediates,
-                                epoch=epoch,
-                                imput_metrics=valid_imput_metrics,
-                                log_rythm=self.args.log_rythm)
+            if epoch % 5 == 0:
+                valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics = self.eval_epoch(
+                    valid_dl)
+                if self.args.tensorboard:
+                    log_to_tensorboard(self, writer=writer,
+                                    mode='valid',
+                                    metrics=[valid_ll, valid_rmse, valid_mse],
+                                    output=valid_output,
+                                    input=valid_input,
+                                    intermediates=intermediates,
+                                    epoch=epoch,
+                                    imput_metrics=valid_imput_metrics,
+                                    log_rythm=self.args.log_rythm)
 
-            # test
-            test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics = self.eval_epoch(
-                test_dl)
-            if self.args.tensorboard:
-                log_to_tensorboard(self, writer=writer,
-                                   mode='test',
-                                   metrics=[test_ll, test_rmse, test_mse],
-                                   output=test_output,
-                                   input=test_input,
-                                   intermediates=intermediates,
-                                   epoch=epoch,
-                                   imput_metrics=test_imput_metrics,
-                                   log_rythm=self.args.log_rythm)
+                # test
+                test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics = self.eval_epoch(
+                    test_dl)
+                if self.args.tensorboard:
+                    log_to_tensorboard(self, writer=writer,
+                                       mode='test',
+                                       metrics=[test_ll, test_rmse, test_mse],
+                                       output=test_output,
+                                       input=test_input,
+                                       intermediates=intermediates,
+                                       epoch=epoch,
+                                       imput_metrics=test_imput_metrics,
+                                       log_rythm=self.args.log_rythm)
 
             if valid_mse < best_valid_mse:
                 improved_mse = True
