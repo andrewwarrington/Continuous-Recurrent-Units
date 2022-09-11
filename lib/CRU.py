@@ -559,7 +559,11 @@ class CRU(nn.Module):
                 'best_train_mse': best_train_mse,
                 'best_valid_mse': best_valid_mse,
                 'best_test_mse': best_test_mse,
-                'train_epoch_time': train_epoch_time
+                'train_epoch_time': train_epoch_time,
+
+                # Compatibility stuff.
+                'Opt acc': best_test_mse,
+                'Test loss': best_test_ll
             })
 
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
