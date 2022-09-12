@@ -585,7 +585,8 @@ class CRU(nn.Module):
                 'Test loss': best_test_ll,
                 'sum_train_step_time': sum_train_step_time,
                 'sum_eval_step_time': sum_eval_step_time,
-            })
+            },
+            step=epoch+1)
 
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
                     f'best_valid_nll:   {best_valid_ll: >9.7f}, '
