@@ -386,72 +386,74 @@ class CRU(nn.Module):
         :param dl: dataloader containing validation or test data
         :return: evaluation metrics, computed output, input, intermediate variables
         """
-        epoch_ll = 0
-        epoch_rmse = 0
-        epoch_mse = 0
+        with torch.no_grad():
 
-        if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
-            epoch_imput_ll = 0
-            epoch_imput_mse = 0
-
-        if self.args.save_intermediates is not None:
-            mask_obs_epoch = []
-            intermediates_epoch = []
-
-        step_times = []
-
-        for i, data in enumerate(dl):
-
-            st = dt()
-
-            if self.args.task == 'interpolation':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.interpolation(
-                    data, track_gradient=False)
-
-            elif self.args.task == 'extrapolation':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.extrapolation(
-                    data, track_gradient=False)
-
-            elif self.args.task == 'regression':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.regression(
-                    data, track_gradient=False)
-
-            elif self.args.task == 'one_step_ahead_prediction':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.one_step_ahead_prediction(
-                    data, track_gradient=False)
-
-            epoch_ll += loss
-            epoch_rmse += rmse(truth, output_mean, mask_truth).item()
-            epoch_mse += mse(truth, output_mean, mask_truth).item()
-
-            en = dt()
-            step_times.append(en - st)
+            epoch_ll = 0
+            epoch_rmse = 0
+            epoch_mse = 0
 
             if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
-                epoch_imput_ll += imput_loss
-                epoch_imput_mse += imput_mse
-                imput_metrics = [epoch_imput_ll/(i+1), epoch_imput_mse/(i+1)]
-            else:
-                imput_metrics = None
+                epoch_imput_ll = 0
+                epoch_imput_mse = 0
 
             if self.args.save_intermediates is not None:
-                intermediates_epoch.append(intermediates)
-                mask_obs_epoch.append(mask_obs)
+                mask_obs_epoch = []
+                intermediates_epoch = []
 
-        # save for plotting
-        if self.args.save_intermediates is not None:
-            torch.save(output_mean, os.path.join(
-                self.args.save_intermediates, 'valid_output_mean.pt'))
-            torch.save(obs, os.path.join(
-                self.args.save_intermediates, 'valid_obs.pt'))
-            torch.save(output_var, os.path.join(
-                self.args.save_intermediates, 'valid_output_var.pt'))
-            torch.save(truth, os.path.join(
-                self.args.save_intermediates, 'valid_truth.pt'))
-            torch.save(intermediates_epoch, os.path.join(
-                self.args.save_intermediates, 'valid_intermediates.pt'))
-            torch.save(mask_obs_epoch, os.path.join(
-                self.args.save_intermediates, 'valid_mask_obs.pt'))
+            step_times = []
+
+            for i, data in enumerate(dl):
+
+                st = dt()
+
+                if self.args.task == 'interpolation':
+                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.interpolation(
+                        data, track_gradient=False)
+
+                elif self.args.task == 'extrapolation':
+                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.extrapolation(
+                        data, track_gradient=False)
+
+                elif self.args.task == 'regression':
+                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.regression(
+                        data, track_gradient=False)
+
+                elif self.args.task == 'one_step_ahead_prediction':
+                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.one_step_ahead_prediction(
+                        data, track_gradient=False)
+
+                epoch_ll += loss
+                epoch_rmse += rmse(truth, output_mean, mask_truth).item()
+                epoch_mse += mse(truth, output_mean, mask_truth).item()
+
+                en = dt()
+                step_times.append(en - st)
+
+                if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
+                    epoch_imput_ll += imput_loss
+                    epoch_imput_mse += imput_mse
+                    imput_metrics = [epoch_imput_ll/(i+1), epoch_imput_mse/(i+1)]
+                else:
+                    imput_metrics = None
+
+                if self.args.save_intermediates is not None:
+                    intermediates_epoch.append(intermediates)
+                    mask_obs_epoch.append(mask_obs)
+
+            # save for plotting
+            if self.args.save_intermediates is not None:
+                torch.save(output_mean, os.path.join(
+                    self.args.save_intermediates, 'valid_output_mean.pt'))
+                torch.save(obs, os.path.join(
+                    self.args.save_intermediates, 'valid_obs.pt'))
+                torch.save(output_var, os.path.join(
+                    self.args.save_intermediates, 'valid_output_var.pt'))
+                torch.save(truth, os.path.join(
+                    self.args.save_intermediates, 'valid_truth.pt'))
+                torch.save(intermediates_epoch, os.path.join(
+                    self.args.save_intermediates, 'valid_intermediates.pt'))
+                torch.save(mask_obs_epoch, os.path.join(
+                    self.args.save_intermediates, 'valid_mask_obs.pt'))
 
         return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.sum(step_times)
 
