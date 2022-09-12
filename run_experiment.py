@@ -96,9 +96,9 @@ if __name__ == '__main__':
 	logger.info(input_command)
 
 	if args.USE_WANDB:
-		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity)
+		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=args.__dict__, entity=args.wandb_entity)
 	else:
-		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity, mode='offline')
+		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=args.__dict__, entity=args.wandb_entity, mode='offline')
 
 	train_dl, valid_dl, test_dl = load_data(args)
 	model = load_model(args)

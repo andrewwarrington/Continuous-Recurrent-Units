@@ -71,8 +71,16 @@ class Encoder(nn.Module):
     # taken from https://github.com/ALRhub/rkn_share/ and modified
     def forward(self, obs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         h = obs
+
         for layer in self._hidden_layers:
+            # print(layer)
+            # print('input', h.shape)
             h = layer(h)
+            # print('output', h.shape, '\n')
+
+        # print(layer)
+        # print(h.shape)
+
         if self._output_normalization.lower() == "pre":
             h = nn.functional.normalize(h, p=2, dim=-1, eps=1e-8)
 

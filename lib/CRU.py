@@ -377,7 +377,7 @@ class CRU(nn.Module):
             torch.save(intermediates_epoch, os.path.join(
                 self.args.save_intermediates, 'train_intermediates.pt'))
 
-        return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.mean(step_times)
+        return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.sum(step_times)
 
     # new code component
     def eval_epoch(self, dl):
@@ -453,7 +453,7 @@ class CRU(nn.Module):
             torch.save(mask_obs_epoch, os.path.join(
                 self.args.save_intermediates, 'valid_mask_obs.pt'))
 
-        return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.mean(step_times)
+        return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.sum(step_times)
 
     # new code component
     def train(self, train_dl, valid_dl, test_dl, identifier, logger, epoch_start=0):
@@ -470,6 +470,7 @@ class CRU(nn.Module):
         # Add some cheap logging of performance.
         best_train_ll, best_valid_ll, best_test_ll = np.inf, np.inf, np.inf
         best_train_mse, best_valid_mse, best_test_mse = np.inf, np.inf, np.inf
+        sum_eval_step_time = 0.0
 
         optimizer = optim.Adam(self.parameters(), self.args.lr)
         def lr_update(epoch): return self.args.lr_decay ** epoch
@@ -484,7 +485,7 @@ class CRU(nn.Module):
             logger.info(f'Epoch {epoch} starts: {start.strftime("%H:%M:%S")}')
 
             # train
-            train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, average_train_step_time = self.train_epoch(
+            train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, sum_train_step_time = self.train_epoch(
                 train_dl, optimizer)
             end_training = datetime.now()
             if self.args.tensorboard:
@@ -514,7 +515,7 @@ class CRU(nn.Module):
                                     log_rythm=self.args.log_rythm)
 
                 # test
-                test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, average_eval_step_time = self.eval_epoch(
+                test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, sum_eval_step_time = self.eval_epoch(
                     test_dl)
                 if self.args.tensorboard:
                     log_to_tensorboard(self, writer=writer,
@@ -580,8 +581,8 @@ class CRU(nn.Module):
                 # Compatibility stuff.
                 'Opt acc': best_test_mse,
                 'Test loss': best_test_ll,
-                'average_train_step_time': average_train_step_time,
-                'average_eval_step_time': average_eval_step_time,
+                'sum_train_step_time': sum_train_step_time,
+                'sum_eval_step_time': sum_eval_step_time,
             })
 
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
