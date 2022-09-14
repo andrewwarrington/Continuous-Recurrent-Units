@@ -502,7 +502,7 @@ class CRU(nn.Module):
                                 log_rythm=self.args.log_rythm)
 
             # eval
-            if (epoch % 5 == 0) or (epoch == epoch_start):
+            if (epoch % self.args.evaluate_every == 0) or (epoch == epoch_start) or (epoch == (self.args.epochs - 1)):
                 valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics, _ = self.eval_epoch(
                     valid_dl)
                 if self.args.tensorboard:
