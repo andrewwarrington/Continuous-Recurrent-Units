@@ -581,10 +581,11 @@ class CRU(nn.Module):
                 'train_epoch_time': train_epoch_time,
 
                 # Compatibility stuff.
-                'Opt acc': best_test_mse,
                 'Test loss': best_test_ll,
                 'sum_train_step_time': sum_train_step_time,
                 'sum_eval_step_time': sum_eval_step_time,
+                "best_test_loss": best_test_ll,
+                "best_test_acc": - best_test_mse,
             },
             step=epoch+1)
 
