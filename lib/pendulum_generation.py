@@ -492,23 +492,26 @@ def generate_pendulums(file_path, task, impute_rate=0.5):
 
         # Gen train.
         train_obs, train_targets, _, _, train_ts = pendulum.sample_data_set(
-            2000, n, full_targets=False)
+            2_000, n, full_targets=False)
         train_obs, _ = pendulum.add_observation_noise(train_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
                                                       t_uu=1.0)
         train_obs = np.expand_dims(train_obs, -1)
 
         # Gen test.
         test_obs, test_targets, _, _, test_ts = pendulum.sample_data_set(
-            1000, n, full_targets=False)
+            1_000, n, full_targets=False)
         test_obs, _ = pendulum.add_observation_noise(test_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
                                                      t_uu=1.0)
         test_obs = np.expand_dims(test_obs, -1)
 
         # Gen validation (added).
-        valid_obs, valid_targets, _, _, valid_ts = pendulum.sample_data_set(
-            1000, n, full_targets=False)
-        valid_obs, _ = pendulum.add_observation_noise(valid_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
-                                                      t_uu=1.0)
+        val_pendulum = Pendulum(24, observation_mode=Pendulum.OBSERVATION_MODE_LINE,
+                                transition_noise_std=0.1, observation_noise_std=1e-5,
+                                seed=42+1, pendulum_params=pend_params)
+        valid_obs, valid_targets, _, _, valid_ts = val_pendulum.sample_data_set(
+            1_000, n, full_targets=False)
+        valid_obs, _ = val_pendulum.add_observation_noise(valid_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
+                                                          t_uu=1.0)
         valid_obs = np.expand_dims(valid_obs, -1)
 
         # Save out.
