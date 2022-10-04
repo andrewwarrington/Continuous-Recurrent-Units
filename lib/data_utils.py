@@ -354,7 +354,7 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
             train_obs_valid_sub[i, ...] = train_obs_valid[i, choice, ...]
 
     for i in range(valid_obs.shape[0]):
-        rng_valid = np.random.default_rng(random_state+i)
+        rng_valid = np.random.default_rng(random_state+i+valid_obs.shape[0])
         choice = np.sort(rng_valid.choice(seq_length, n, replace=False))
         valid_time_points.append(choice)
         valid_obs_sub[i, ...], valid_targets_sub[i, ...] = [
