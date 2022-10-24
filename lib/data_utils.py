@@ -26,22 +26,13 @@ from lib.pendulum_generation import generate_pendulums
 
 # new code component 
 def load_data(args):
-    file_path = f'data/{args.dataset}/'
+    file_path = f'{args.dir_name}/{args.dataset}/'
     
     # Pendulum 
     if args.dataset == 'pendulum':
         
         if args.task == 'interpolation':
-            if not os.path.exists(os.path.join(file_path, f'pend_interpolation_ir{args.impute_rate}.npz')):
-                print(f'Generating pendulum trajectories and saving to {file_path} ...')
-                generate_pendulums(file_path, task=args.task, impute_rate=args.impute_rate)
-
-            train = Pendulum_interpolation(file_path=file_path, name=f'pend_interpolation_ir{args.impute_rate}.npz', 
-                    mode='train', sample_rate=args.sample_rate, random_state=args.data_random_seed)
-            valid = Pendulum_interpolation(file_path=file_path, name=f'pend_interpolation_ir{args.impute_rate}.npz', 
-                    mode='valid', sample_rate=args.sample_rate, random_state=args.data_random_seed)
-            test = Pendulum_interpolation(file_path=file_path, name=f'pend_interpolation_ir{args.impute_rate}.npz',
-                    mode='test', sample_rate=args.sample_rate, random_state=args.data_random_seed)
+            raise NotImplementedError()
         
         elif args.task =='regression':
             if not os.path.exists(os.path.join(file_path, 'pend_regression.npz')):
@@ -50,47 +41,32 @@ def load_data(args):
 
             train = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
                                mode='train', sample_rate=args.sample_rate, random_state=args.data_random_seed)
+            test = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
+                                       mode='test', sample_rate=args.sample_rate, random_state=args.data_random_seed)
             valid = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
                                mode='valid', sample_rate=args.sample_rate, random_state=args.data_random_seed)
-            test = Pendulum_regression(file_path=file_path, name='pend_regression.npz',
-                               mode='test', sample_rate=args.sample_rate, random_state=args.data_random_seed)
         else:
             raise Exception('Task not available for Pendulum data')
         collate_fn = None
         
     # USHCN
     elif args.dataset == 'ushcn':
-        if not os.path.exists(os.path.join(file_path, 'pivot_train_valid_1990_1993_thr4_normalize.csv')):
-            print(f'Downloading USHCN data and saving to {file_path} ...')
-            download_and_process_ushcn(file_path)
-
-        train = USHCN(file_path=file_path, name='pivot_train_valid_1990_1993_thr4_normalize.csv', unobserved_rate=args.unobserved_rate,
-                     impute_rate=args.impute_rate, sample_rate=args.sample_rate)
-        valid = USHCN(file_path=file_path, name='pivot_test_1990_1993_thr4_normalize.csv', unobserved_rate=args.unobserved_rate,
-                     impute_rate=args.impute_rate, sample_rate=args.sample_rate)
-        test = None
-        collate_fn = None
+        raise NotImplementedError()
     
     # Physionet
     elif args.dataset == 'physionet':
-        if not os.path.exists(os.path.join(file_path, 'norm_train_valid.pt')):
-            print(f'Downloading Physionet data and saving to {file_path} ...')
-            download_and_process_physionet(file_path)
-
-        train = Physionet(file_path=file_path, name='norm_train_valid.pt')
-        valid = Physionet(file_path=file_path, name='norm_test.pt')
-        test = None
-        collate_fn = collate_fn_physionet
+        raise NotImplementedError()
     
     train_dl = DataLoader(train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
+    test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
     valid_dl = DataLoader(valid, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
-    if test is not None:
-        test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
-    else:
-        test_dl = None
+    print('\nSanity Checksums:')
+    print('Trn obs: ', train_dl.dataset.obs.sum())
+    print('Tst obs: ', test_dl.dataset.obs.sum())
+    print('Val obs: ', valid_dl.dataset.obs.sum(), '\n')
 
-    return train_dl, valid_dl, test_dl
+    return train_dl, test_dl, valid_dl
 
 
 # new code component 

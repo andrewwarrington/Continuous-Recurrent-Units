@@ -437,48 +437,7 @@ class Pendulum:
 def generate_pendulums(file_path, task, impute_rate=0.5):
     
     if task == 'interpolation':
-        pend_params = Pendulum.pendulum_default_params()
-        pend_params[Pendulum.FRICTION_KEY] = 0.1
-        n = 100
-
-        pendulum = Pendulum(24, observation_mode=Pendulum.OBSERVATION_MODE_LINE,
-                            transition_noise_std=0.1, observation_noise_std=1e-5,
-                            seed=42, pendulum_params=pend_params)
-        rng = pendulum.random
-
-        train_obs, _, _, _, train_ts = pendulum.sample_data_set(
-            2000, n, full_targets=False)
-        train_obs = np.expand_dims(train_obs, -1)
-        train_targets = train_obs.copy()
-        train_obs_valid = rng.rand(
-            train_obs.shape[0], train_obs.shape[1], 1) > impute_rate
-        train_obs_valid[:, :5] = True
-        train_obs[np.logical_not(np.squeeze(train_obs_valid))] = 0
-
-        test_obs, _, _, _, test_ts = pendulum.sample_data_set(
-            1000, n, full_targets=False)
-        test_obs = np.expand_dims(test_obs, -1)
-        test_targets = test_obs.copy()
-        test_obs_valid = rng.rand(
-            test_obs.shape[0], test_obs.shape[1], 1) > impute_rate
-        test_obs_valid[:, :5] = True
-        test_obs[np.logical_not(np.squeeze(test_obs_valid))] = 0
-
-        valid_obs, _, _, _, valid_ts = pendulum.sample_data_set(
-            1000, n, full_targets=False)
-        valid_obs = np.expand_dims(valid_obs, -1)
-        valid_targets = valid_obs.copy()
-        valid_obs_valid = rng.rand(
-            valid_obs.shape[0], valid_obs.shape[1], 1) > impute_rate
-        valid_obs_valid[:, :5] = True
-        valid_obs[np.logical_not(np.squeeze(valid_obs_valid))] = 0
-
-        if not os.path.exists(file_path):
-            os.makedirs(file_path)
-        np.savez_compressed(os.path.join(file_path, f"pend_interpolation_ir{impute_rate}"),
-                            train_obs=train_obs, train_targets=train_targets, train_obs_valid=train_obs_valid, train_ts=train_ts,
-                            valid_obs=valid_obs, valid_targets=valid_targets, valid_obs_valid=valid_obs_valid, valid_ts=valid_ts,
-                            test_obs=test_obs, test_targets=test_targets, test_obs_valid=test_obs_valid, test_ts=test_ts)
+        raise NotImplementedError()
     
     elif task == 'regression':
         pend_params = Pendulum.pendulum_default_params()
@@ -491,33 +450,29 @@ def generate_pendulums(file_path, task, impute_rate=0.5):
                             seed=42, pendulum_params=pend_params)
 
         # Gen train.
-        train_obs, train_targets, _, _, train_ts = pendulum.sample_data_set(
-            2_000, n, full_targets=False)
-        train_obs, _ = pendulum.add_observation_noise(train_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
-                                                      t_uu=1.0)
+        train_obs, train_targets, _, _, train_ts = pendulum.sample_data_set(2_000, n, full_targets=False)
+        train_obs, _ = pendulum.add_observation_noise(train_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75, t_uu=1.0)
         train_obs = np.expand_dims(train_obs, -1)
 
         # Gen test.
-        test_obs, test_targets, _, _, test_ts = pendulum.sample_data_set(
-            1_000, n, full_targets=False)
-        test_obs, _ = pendulum.add_observation_noise(test_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
-                                                     t_uu=1.0)
+        test_obs, test_targets, _, _, test_ts = pendulum.sample_data_set(1_000, n, full_targets=False)
+        test_obs, _ = pendulum.add_observation_noise(test_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75, t_uu=1.0)
         test_obs = np.expand_dims(test_obs, -1)
 
-        # Gen validation (added).
+        # Gen validation (added by AW and kept modular).
         val_pendulum = Pendulum(24, observation_mode=Pendulum.OBSERVATION_MODE_LINE,
                                 transition_noise_std=0.1, observation_noise_std=1e-5,
                                 seed=42+1, pendulum_params=pend_params)
-        valid_obs, valid_targets, _, _, valid_ts = val_pendulum.sample_data_set(
-            1_000, n, full_targets=False)
-        valid_obs, _ = val_pendulum.add_observation_noise(valid_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75,
-                                                          t_uu=1.0)
+        valid_obs, valid_targets, _, _, valid_ts = val_pendulum.sample_data_set(1_000, n, full_targets=False)
+        valid_obs, _ = val_pendulum.add_observation_noise(valid_obs, first_n_clean=5, r=0.2, t_ll=0.0, t_lu=0.25, t_ul=0.75, t_uu=1.0)
         valid_obs = np.expand_dims(valid_obs, -1)
+        # End AW modular code.
 
         # Save out.
         if not os.path.exists(file_path):
             os.makedirs(file_path)
         np.savez_compressed(os.path.join(file_path, f"pend_regression.npz"),
                             train_obs=train_obs, train_targets=train_targets, train_ts=train_ts,
+                            test_obs=test_obs, test_targets=test_targets, test_ts=test_ts,
                             valid_obs=valid_obs, valid_targets=valid_targets, valid_ts=valid_ts,
-                            test_obs=test_obs, test_targets=test_targets, test_ts=test_ts)
+                            madeby='cru')

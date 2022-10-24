@@ -72,6 +72,7 @@ parser.add_argument("--wandb-project", type=str, default="CRU")
 parser.add_argument("--wandb-entity", type=str, default="nlb")
 parser.add_argument("--method", type=str, default="CRU")
 parser.add_argument("--evaluate_every", type=int, default=1, help="Evaluate validation and test every n epochs.")
+parser.add_argument("--dir_name", type=str, default='./../cache_dir_tmp', help="Where is the data cached to.")
 
 
 args = parser.parse_args()
@@ -102,7 +103,7 @@ if __name__ == '__main__':
 	else:
 		wnb = wandb.init(project=args.wandb_project, job_type='model_training', config=args.__dict__, entity=args.wandb_entity, mode='offline')
 
-	train_dl, valid_dl, test_dl = load_data(args)
+	train_dl, test_dl, valid_dl = load_data(args)
 	model = load_model(args)
 	logger.info(f'parameters: {count_parameters(model)}')
 

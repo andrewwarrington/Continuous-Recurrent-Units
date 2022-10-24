@@ -458,12 +458,12 @@ class CRU(nn.Module):
         return epoch_ll/(i+1), epoch_rmse/(i+1), epoch_mse/(i+1), [output_mean, output_var], intermediates, [obs, truth, mask_obs], imput_metrics, np.sum(step_times)
 
     # new code component
-    def train(self, train_dl, valid_dl, test_dl, identifier, logger, epoch_start=0):
+    def train(self, train_dl, test_dl, valid_dl, identifier, logger, epoch_start=0):
         """Trains model on trainset and evaluates on test data. Logs results and saves trained model.
 
         :param train_dl: training dataloader
-        :param valid_dl: validation dataloader
         :param test_dl: test dataloader
+        :param valid_dl: validation dataloader
         :param identifier: logger id
         :param logger: logger object
         :param epoch_start: starting epoch
@@ -472,12 +472,15 @@ class CRU(nn.Module):
         # Add some cheap logging of performance.
         best_train_ll, best_valid_ll, best_test_ll = np.inf, np.inf, np.inf
         best_train_mse, best_valid_mse, best_test_mse = np.inf, np.inf, np.inf
+        valid_mse, test_mse, valid_ll, test_ll = np.inf, np.inf, np.inf, np.inf
         sum_eval_step_time = 0.0
 
         optimizer = optim.Adam(self.parameters(), self.args.lr)
-        def lr_update(epoch): return self.args.lr_decay ** epoch
-        scheduler = torch.optim.lr_scheduler.LambdaLR(
-            optimizer, lr_lambda=lr_update)
+
+        def lr_update(epoch):
+            return self.args.lr_decay ** epoch
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_update)
         
         make_dir(f'../results/tensorboard/{self.args.dataset}')
         writer = SummaryWriter(f'../results/tensorboard/{self.args.dataset}/{identifier}')
@@ -487,40 +490,40 @@ class CRU(nn.Module):
             logger.info(f'Epoch {epoch} starts: {start.strftime("%H:%M:%S")}')
 
             # train
-            train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, sum_train_step_time = self.train_epoch(
-                train_dl, optimizer)
+            train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, sum_train_step_time = self.train_epoch(train_dl, optimizer)
             end_training = datetime.now()
             if self.args.tensorboard:
-                log_to_tensorboard(self, writer=writer,
-                                mode='train',
-                                metrics=[train_ll, train_rmse, train_mse],
-                                output=train_output,
-                                input=train_input,
-                                intermediates=intermediates,
-                                epoch=epoch,
-                                imput_metrics=train_imput_metrics,
-                                log_rythm=self.args.log_rythm)
+                log_to_tensorboard(self,
+                                   writer=writer,
+                                   mode='train',
+                                   metrics=[train_ll, train_rmse, train_mse],
+                                   output=train_output,
+                                   input=train_input,
+                                   intermediates=intermediates,
+                                   epoch=epoch,
+                                   imput_metrics=train_imput_metrics,
+                                   log_rythm=self.args.log_rythm)
 
             # eval
             if (epoch % self.args.evaluate_every == 0) or (epoch == epoch_start) or (epoch == (self.args.epochs - 1)):
-                valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics, _ = self.eval_epoch(
-                    valid_dl)
+                valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics, _ = self.eval_epoch(valid_dl)
                 if self.args.tensorboard:
-                    log_to_tensorboard(self, writer=writer,
-                                    mode='valid',
-                                    metrics=[valid_ll, valid_rmse, valid_mse],
-                                    output=valid_output,
-                                    input=valid_input,
-                                    intermediates=intermediates,
-                                    epoch=epoch,
-                                    imput_metrics=valid_imput_metrics,
-                                    log_rythm=self.args.log_rythm)
+                    log_to_tensorboard(self,
+                                       writer=writer,
+                                       mode='valid',
+                                       metrics=[valid_ll, valid_rmse, valid_mse],
+                                       output=valid_output,
+                                       input=valid_input,
+                                       intermediates=intermediates,
+                                       epoch=epoch,
+                                       imput_metrics=valid_imput_metrics,
+                                       log_rythm=self.args.log_rythm)
 
                 # test
-                test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, sum_eval_step_time = self.eval_epoch(
-                    test_dl)
+                test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, sum_eval_step_time = self.eval_epoch(test_dl)
                 if self.args.tensorboard:
-                    log_to_tensorboard(self, writer=writer,
+                    log_to_tensorboard(self,
+                                       writer=writer,
                                        mode='test',
                                        metrics=[test_ll, test_rmse, test_mse],
                                        output=test_output,

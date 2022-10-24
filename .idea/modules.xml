@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/cru.iml" filepath="$PROJECT_DIR$/.idea/cru.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Continuous-Recurrent-Units.iml" filepath="$PROJECT_DIR$/.idea/Continuous-Recurrent-Units.iml" />
     </modules>
   </component>
 </project>
