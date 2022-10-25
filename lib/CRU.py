@@ -568,29 +568,33 @@ class CRU(nn.Module):
 
             wandb.log({
                 'epoch': epoch,
-                'train_ll': train_ll,
-                'valid_ll': valid_ll,
-                'test_ll': test_ll,
-                'train_mse': train_mse,
-                'valid_mse': valid_mse,
-                'test_mse': test_mse,
-                'best_train_ll': best_train_ll,
-                'best_valid_ll': best_valid_ll,
-                'best_test_ll': best_test_ll,
-                'improved_mse': improved_mse,
-                'best_train_mse': best_train_mse,
-                'best_valid_mse': best_valid_mse,
-                'best_test_mse': best_test_mse,
-                'train_epoch_time': train_epoch_time,
+                'Training Loss': train_ll,
+                'Val Loss': valid_ll,
+                'Test Loss': test_ll,
+                'Training Accuracy': - train_mse,
+                'Val Accuracy': - valid_mse,
+                'Test Accuracy': - test_mse,
 
-                # Compatibility stuff.
-                'Test loss': best_test_ll,
+                'best_train_loss': best_train_ll,
+                'best_valid_loss': best_valid_ll,
+                'best_test_loss': best_test_ll,
+                'best_train_acc': - best_train_mse,
+                'best_valid_acc': - best_valid_mse,
+                'best_test_acc': - best_test_mse,
+
+                'train_epoch_time': train_epoch_time,
+                'improved_mse': improved_mse,
                 'sum_train_step_time': sum_train_step_time,
                 'sum_eval_step_time': sum_eval_step_time,
-                "best_test_loss": best_test_ll,
-                "best_test_acc": - best_test_mse,
             },
             step=epoch+1)
+
+            if improved_mse:
+                wandb.run.summary["Best Epoch"] = epoch
+                wandb.run.summary["Best Val Loss"] = best_valid_ll
+                wandb.run.summary["Best Val Accuracy"] = - best_valid_mse
+                wandb.run.summary["Best Test Loss"] = best_test_ll
+                wandb.run.summary["Best Test Accuracy"] = - best_test_mse
 
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
                     f'best_valid_nll:   {best_valid_ll: >9.7f}, '

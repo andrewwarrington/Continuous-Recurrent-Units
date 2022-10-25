@@ -72,7 +72,7 @@ parser.add_argument("--wandb-project", type=str, default="CRU")
 parser.add_argument("--wandb-entity", type=str, default="nlb")
 parser.add_argument("--method", type=str, default="CRU")
 parser.add_argument("--evaluate_every", type=int, default=1, help="Evaluate validation and test every n epochs.")
-parser.add_argument("--dir_name", type=str, default='./../cache_dir_tmp', help="Where is the data cached to.")
+parser.add_argument("--dir_name", type=str, default='./../cache_dir', help="Where is the data cached to.")
 
 
 args = parser.parse_args()
