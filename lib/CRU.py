@@ -469,6 +469,11 @@ class CRU(nn.Module):
         :param epoch_start: starting epoch
         """
 
+        print('\nSanity Checksums:')
+        print('Trn obs: ', train_dl.dataset.obs.sum())
+        print('Tst obs: ', test_dl.dataset.obs.sum())
+        print('Val obs: ', valid_dl.dataset.obs.sum(), '\n')
+
         # Add some cheap logging of performance.
         best_train_ll, best_valid_ll, best_test_ll = np.inf, np.inf, np.inf
         best_train_mse, best_valid_mse, best_test_mse = np.inf, np.inf, np.inf
