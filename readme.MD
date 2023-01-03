@@ -1,4 +1,45 @@
-# Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
+# Fork of: Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
+This repository contains a modified version of the code released as part of [Modeling Irregular Time Series with Continuous Recurrent Units](https://proceedings.mlr.press/v162/schirmer22a/schirmer22a.pdf) by [Mona Schirmer](https://monasch.github.io/), [Mazin Eltayeb](https://www.linkedin.com/in/mazin-eltayeb-199a6a18), [Stefan Lessmann](https://www.wiwi.hu-berlin.de/en/Professorships/bwl/wi/personen-en/hl/standardseite-en) and [Maja Rudolph](http://maja-rita-rudolph.com/) published at ICML 2022.
+
+This code was modified for use in Simplified State Space Layers for Sequence Modeling, for which the preprint is available [here](https://arxiv.org/abs/2208.04933).  We modify and distribute this version of the code permittedunder the terms of the original GNU Affero General Public License (Version 3), for which copyright remains with the original authors and all original terms apply equally here.  
+
+We modify the original code in three main ways:
+- We remove nearly all of the code for applications that we did not consider.
+- Added a validation dataset.
+- Added basic logging and sanity check outputs for the _Pendulum_ example.
+
+We intend for this version of the code to be used for generating the data for the CRU baseline and the S5 application (in Section 6.3 of the S5 [paper](https://arxiv.org/abs/2208.04933)).  It also runs and logs the CRU pendulum experiment to Weights and Biases (wandb) in a way that is compatible with the S5 experiments.
+
+To prepare this repository:
+```
+git clone https://github.com/lindermanlab/S5.git
+cd S5
+mkdir -p cache_dir
+git checkout pendulum
+git clone https://github.com/andrewwarrington/Continuous-Recurrent-Units.git
+cd Continuous-Recurrent-Units
+pip install -r requirements.txt
+wandb login  % If using wandb, follow the on-screen instructions.
+```
+
+To then actually run the Pendulum regression example, the use the lightly modified callstring:
+```
+python run_experiment.py --dataset pendulum --task regression -lsd 30 --sample-rate 0.5 --USE-WANDB 1 --wandb-project $WANDB_PROJ_NAME --wandb-entity $WANDB_USER_NAME --dir_name ./../cache_dir
+```
+where `$WANDB_PROJ_NAME, $WANDB_USER_NAME` are your wandb project name and username respectively.  Scripts for running the exact experiments in the context of S5 are contained in the S5 repository.
+
+Running this will generate a file `./../cache_dir/pendulum/pend_regression.npz` which contains the train/val/test data used both by this CRU implementation and the S5 implementation.  On a reasonable GPU, the CRU code takes about 90 minutes to execute.
+
+If you have any questions, feel free to reach out! 
+
+-- The S5 Authors 
+
+
+
+
+--- 
+
+# Original Readme: Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
 
 This repository contains the PyTorch implementation for the paper [Modeling Irregular Time Series with Continuous Recurrent Units](https://arxiv.org/pdf/2111.11344.pdf) by [Mona Schirmer](https://monasch.github.io/), [Mazin Eltayeb](https://www.linkedin.com/in/mazin-eltayeb-199a6a18), [Stefan Lessmann](https://www.wiwi.hu-berlin.de/en/Professorships/bwl/wi/personen-en/hl/standardseite-en) and [Maja Rudolph](http://maja-rita-rudolph.com/) published at ICML 2022.
 >Schirmer, M., Eltayeb, M., Lessmann, S., & Rudolph, M. (2022, June). Modeling irregular time series with continuous recurrent units. In International Conference on Machine Learning (pp. 19388-19405). PMLR.

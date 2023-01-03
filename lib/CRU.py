@@ -33,7 +33,6 @@ from lib.decoder import SplitDiagGaussianDecoder, BernoulliDecoder
 from lib.CRULayer import CRULayer
 from lib.CRUCell import var_activation, var_activation_inverse
 from lib.losses import rmse, mse, GaussianNegLogLik, bernoulli_nll
-from lib.data_utils import  align_output_and_target, adjust_obs_for_extrapolation
 
 from timeit import default_timer as dt
 
@@ -177,73 +176,6 @@ class CRU(nn.Module):
         return out_mean, out_var, intermediates
 
     # new code component
-    def interpolation(self, data, track_gradient=True):
-        """Computes loss on interpolation task
-
-        :param data: batch of data
-        :param track_gradient: if to track gradient for backpropagation
-        :return: loss, outputs, inputs, intermediate variables, metrics on imputed points
-        """
-        if self.bernoulli_output:
-            obs, truth, obs_valid, obs_times, mask_truth = [
-                j.to(self._device) for j in data]
-            mask_obs = None
-        else:
-            obs, truth, obs_valid, obs_times, mask_truth, mask_obs = [
-                j.to(self._device) for j in data]
-
-        obs_times = self.args.ts * obs_times
-
-        with torch.set_grad_enabled(track_gradient):
-            output_mean, output_var, intermediates = self.forward(
-                obs_batch=obs, time_points=obs_times, obs_valid=obs_valid)
-
-            if self.bernoulli_output:
-                loss = bernoulli_nll(truth, output_mean, uint8_targets=False)
-                mask_imput = (~obs_valid[...,None, None, None]) * mask_truth
-                imput_loss = np.nan #TODO: compute bernoulli loss on imputed points
-                imput_mse = mse(truth.flatten(start_dim=2), output_mean.flatten(start_dim=2), mask=mask_imput.flatten(start_dim=2))
-
-            else:
-                loss = GaussianNegLogLik(
-                    output_mean, truth, output_var, mask=mask_truth)
-                # compute metric on imputed points only
-                mask_imput = (~obs_valid[...,None]) * mask_truth
-                imput_loss = GaussianNegLogLik(output_mean, truth, output_var, mask=mask_imput)
-                imput_mse = mse(truth, output_mean, mask=mask_imput)
-        
-        return loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse
-
-    # new code component
-    def extrapolation(self, data, track_gradient=True):
-        """Computes loss on extrapolation task
-
-        :param data: batch of data
-        :param track_gradient: if to track gradient for backpropagation
-        :return: loss, outputs, inputs, intermediate variables, metrics on imputed points
-        """
-        obs, truth, obs_valid, obs_times, mask_truth, mask_obs = [
-            j.to(self._device) for j in data]
-        obs, obs_valid = adjust_obs_for_extrapolation(
-            obs, obs_valid, obs_times, self.args.cut_time)
-        obs_times = self.args.ts * obs_times
-
-        with torch.set_grad_enabled(track_gradient):
-            output_mean, output_var, intermediates = self.forward(
-                obs_batch=obs, time_points=obs_times, obs_valid=obs_valid)
-
-            loss = GaussianNegLogLik(
-                output_mean, truth, output_var, mask=mask_truth)
-            
-            # compute metric on imputed points only
-            mask_imput = (~obs_valid[..., None]) * mask_truth
-            imput_loss = GaussianNegLogLik(
-                output_mean, truth, output_var, mask=mask_imput)
-            imput_mse = mse(truth, output_mean, mask=mask_imput)
-
-        return loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse
-
-    # new code component
     def regression(self, data, track_gradient=True):
         """Computes loss on regression task
 
@@ -257,27 +189,6 @@ class CRU(nn.Module):
         with torch.set_grad_enabled(track_gradient):
             output_mean, output_var, intermediates = self.forward(
                 obs_batch=obs, time_points=obs_times, obs_valid=obs_valid)
-            loss = GaussianNegLogLik(
-                output_mean, truth, output_var, mask=mask_truth)
-
-        return loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates
-
-    # new code component
-    def one_step_ahead_prediction(self, data, track_gradient=True):
-        """Computes loss on one-step-ahead prediction
-
-        :param data: batch of data
-        :param track_gradient: if to track gradient for backpropagation
-        :return: loss, input, intermediate variables and computed output
-        """
-        obs, truth, obs_valid, obs_times, mask_truth, mask_obs = [
-            j.to(self._device) for j in data]
-        obs_times = self.args.ts * obs_times
-        with torch.set_grad_enabled(track_gradient):
-            output_mean, output_var, intermediates = self.forward(
-                obs_batch=obs, time_points=obs_times, obs_valid=obs_valid)
-            output_mean, output_var, truth, mask_truth = align_output_and_target(
-                output_mean, output_var, truth, mask_truth)
             loss = GaussianNegLogLik(
                 output_mean, truth, output_var, mask=mask_truth)
 
@@ -309,22 +220,8 @@ class CRU(nn.Module):
 
             st = dt()
 
-            if self.args.task == 'interpolation':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.interpolation(
-                    data)
-
-            elif self.args.task == 'extrapolation':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.extrapolation(
-                    data)
-
-            elif self.args.task == 'regression':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.regression(
-                    data)
-
-            elif self.args.task == 'one_step_ahead_prediction':
-                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.one_step_ahead_prediction(
-                    data)
-
+            if self.args.task == 'regression':
+                loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.regression(data)
             else:
                 raise Exception('Unknown task')
 
@@ -359,12 +256,7 @@ class CRU(nn.Module):
             epoch_rmse += rmse(truth, output_mean, mask_truth).item()
             epoch_mse += mse(truth, output_mean, mask_truth).item()
 
-            if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
-                epoch_imput_ll += imput_loss
-                epoch_imput_mse += imput_mse
-                imput_metrics = [epoch_imput_ll/(i+1), epoch_imput_mse/(i+1)]
-            else:
-                imput_metrics = None
+            imput_metrics = None
 
             if self.args.save_intermediates is not None:
                 intermediates_epoch.append(intermediates)
@@ -406,21 +298,11 @@ class CRU(nn.Module):
 
                 st = dt()
 
-                if self.args.task == 'interpolation':
-                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.interpolation(
-                        data, track_gradient=False)
-
-                elif self.args.task == 'extrapolation':
-                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates, imput_loss, imput_mse = self.extrapolation(
-                        data, track_gradient=False)
-
-                elif self.args.task == 'regression':
+                if self.args.task == 'regression':
                     loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.regression(
                         data, track_gradient=False)
-
-                elif self.args.task == 'one_step_ahead_prediction':
-                    loss, output_mean, output_var, obs, truth, mask_obs, mask_truth, intermediates = self.one_step_ahead_prediction(
-                        data, track_gradient=False)
+                else:
+                    raise Exception('Unknown task')
 
                 epoch_ll += loss
                 epoch_rmse += rmse(truth, output_mean, mask_truth).item()
@@ -429,13 +311,7 @@ class CRU(nn.Module):
                 en = dt()
                 step_times.append(en - st)
 
-                if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
-                    epoch_imput_ll += imput_loss
-                    epoch_imput_mse += imput_mse
-                    imput_metrics = [epoch_imput_ll/(i+1), epoch_imput_mse/(i+1)]
-                else:
-                    imput_metrics = None
-
+                imput_metrics = None
                 if self.args.save_intermediates is not None:
                     intermediates_epoch.append(intermediates)
                     mask_obs_epoch.append(mask_obs)
@@ -559,15 +435,6 @@ class CRU(nn.Module):
                         f'best_valid_mse:   {best_valid_mse: >9.7f}, '
                         f'best_test_mse:   {best_test_mse: >9.7f}')
 
-            if self.args.task == 'extrapolation' or self.args.impute_rate is not None:
-                if self.bernoulli_output:
-                    logger.info(f' train_mse_imput: {train_imput_metrics[1]: >9.7f}')
-                    logger.info(f' valid_mse_imput: {valid_imput_metrics[1]: >9.7f}')
-                    logger.info(f' test_mse_imput:  {test_imput_metrics[1]: >9.7f}')
-                else:
-                    logger.info(f' train_nll_imput: {train_imput_metrics[0]: >9.7f}, train_mse_imput: {train_imput_metrics[1]: >9.7f}')
-                    logger.info(f' valid_nll_imput: {valid_imput_metrics[0]: >9.7f}, valid_mse_imput: {valid_imput_metrics[1]: >9.7f}')
-                    logger.info(f' test_nll_imput:  {test_imput_metrics[0]: >9.7f}, test_mse_imput:  {test_imput_metrics[1]: >9.7f}')
             # logger.info('\n')
             scheduler.step()
 

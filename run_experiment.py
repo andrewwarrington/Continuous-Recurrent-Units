@@ -23,6 +23,7 @@ import numpy as np
 import sys
 import os
 import wandb
+import pickle
 
 parser = argparse.ArgumentParser('CRU')
 # train configs
@@ -106,6 +107,13 @@ if __name__ == '__main__':
 	train_dl, test_dl, valid_dl = load_data(args)
 	model = load_model(args)
 	logger.info(f'parameters: {count_parameters(model)}')
+
+	# Dump out the actual dataloaders so that we can sanity check them between the CRU and S5 code.
+	with open('./datasets_cru.p', 'wb') as f:
+		pickle.dump({'train_dl': train_dl,
+					 'valid_dl': valid_dl,
+					 'test_dl': test_dl},
+					f)
 
 	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl, identifier=identifier, logger=logger)
 

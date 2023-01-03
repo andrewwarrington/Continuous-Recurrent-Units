@@ -436,10 +436,7 @@ class Pendulum:
 # taken from https://github.com/ALRhub/rkn_share/ and modified
 def generate_pendulums(file_path, task, impute_rate=0.5):
     
-    if task == 'interpolation':
-        raise NotImplementedError()
-    
-    elif task == 'regression':
+    if task == 'regression':
         pend_params = Pendulum.pendulum_default_params()
         pend_params[Pendulum.FRICTION_KEY] = 0.1
         pend_params[Pendulum.DT_KEY] = 0.01
@@ -476,3 +473,5 @@ def generate_pendulums(file_path, task, impute_rate=0.5):
                             test_obs=test_obs, test_targets=test_targets, test_ts=test_ts,
                             valid_obs=valid_obs, valid_targets=valid_targets, valid_ts=valid_ts,
                             madeby='cru')
+    else:
+        raise NotImplementedError()
