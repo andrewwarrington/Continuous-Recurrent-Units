@@ -345,10 +345,19 @@ class CRU(nn.Module):
         :param epoch_start: starting epoch
         """
 
+        # Compute some checksums for sanity between CRU and S5.
         print('\nSanity Checksums:')
-        print('Trn obs: ', train_dl.dataset.obs.sum())
-        print('Tst obs: ', test_dl.dataset.obs.sum())
-        print('Val obs: ', valid_dl.dataset.obs.sum(), '\n')
+        chksum_dict = {'chksum/obs/train': train_dl.dataset.obs.sum(),
+                       'chksum/obs/test': test_dl.dataset.obs.sum(),
+                       'chksum/obs/val': valid_dl.dataset.obs.sum(),
+                       'chksum/targets/train': train_dl.dataset.targets.sum(),
+                       'chksum/targets/test': test_dl.dataset.targets.sum(),
+                       'chksum/targets/val': valid_dl.dataset.targets.sum(),
+                       'chksum/time_points/train': train_dl.dataset.time_points.sum(),
+                       'chksum/time_points/test': test_dl.dataset.time_points.sum(),
+                       'chksum/time_points/val': valid_dl.dataset.time_points.sum()}
+        wandb.log(chksum_dict, commit=False)
+        print(chksum_dict)
 
         # Add some cheap logging of performance.
         best_train_ll, best_valid_ll, best_test_ll = np.inf, np.inf, np.inf

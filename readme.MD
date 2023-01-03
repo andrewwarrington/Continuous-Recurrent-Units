@@ -1,14 +1,27 @@
 # Fork of: Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
-This repository contains a modified version of the code released as part of [Modeling Irregular Time Series with Continuous Recurrent Units](https://proceedings.mlr.press/v162/schirmer22a/schirmer22a.pdf) by [Mona Schirmer](https://monasch.github.io/), [Mazin Eltayeb](https://www.linkedin.com/in/mazin-eltayeb-199a6a18), [Stefan Lessmann](https://www.wiwi.hu-berlin.de/en/Professorships/bwl/wi/personen-en/hl/standardseite-en) and [Maja Rudolph](http://maja-rita-rudolph.com/) published at ICML 2022.
+This repository contains a modified version of the code released as part of 
+[Modeling Irregular Time Series with Continuous Recurrent Units](https://proceedings.mlr.press/v162/schirmer22a/schirmer22a.pdf) 
+by [Mona Schirmer](https://monasch.github.io/), [Mazin Eltayeb](https://www.linkedin.com/in/mazin-eltayeb-199a6a18), 
+[Stefan Lessmann](https://www.wiwi.hu-berlin.de/en/Professorships/bwl/wi/personen-en/hl/standardseite-en) 
+and [Maja Rudolph](http://maja-rita-rudolph.com/) published at ICML 2022.
 
-This code was modified for use in Simplified State Space Layers for Sequence Modeling, for which the preprint is available [here](https://arxiv.org/abs/2208.04933).  We modify and distribute this version of the code permittedunder the terms of the original GNU Affero General Public License (Version 3), for which copyright remains with the original authors and all original terms apply equally here.  
+This code was modified for use in Simplified State Space Layers for Sequence Modeling, 
+for which the preprint is available [here](https://arxiv.org/abs/2208.04933).  We 
+modify and distribute this version of the code permittedunder the terms of the 
+original GNU Affero General Public License (Version 3), for which copyright remains 
+with the original authors and all original terms apply equally here.  
 
 We modify the original code in three main ways:
 - We remove nearly all of the code for applications that we did not consider.
 - Added a validation dataset.
 - Added basic logging and sanity check outputs for the _Pendulum_ example.
 
-We intend for this version of the code to be used for generating the data for the CRU baseline and the S5 application (in Section 6.3 of the S5 [paper](https://arxiv.org/abs/2208.04933)).  It also runs and logs the CRU pendulum experiment to Weights and Biases (wandb) in a way that is compatible with the S5 experiments.
+We intend for this version of the code to be used for generating the data for the _CRU 
+(ours)_ baseline and the S5 application (in Section 6.3 of the S5 
+[paper](https://arxiv.org/abs/2208.04933)).  It also runs and logs the CRU pendulum 
+experiment to Weights and Biases (wandb) in a way that is compatible with the S5 
+experiments.  This code should not be used for reproduction of the original CRU 
+experiments.  
 
 To prepare this repository:
 ```
