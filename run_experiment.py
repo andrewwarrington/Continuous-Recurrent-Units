@@ -73,12 +73,13 @@ parser.add_argument('--pin-memory', type=bool, default=True, help="If to pin mem
 parser.add_argument('--data-random-seed', type=int, default=0, help="Random seed for subsampling timepoints and features.")
 parser.add_argument('-rs', '--random-seed', type=int, default=0, help="Random seed for initializing model parameters.")
 
-parser.add_argument('--USE-WANDB', type=int, default=1, help="Log to wandb.")
-parser.add_argument("--wandb-project", type=str, default="CRU")
-parser.add_argument("--wandb-entity", type=str, default="nlb")
-parser.add_argument("--method", type=str, default="CRU")
+parser.add_argument('--USE-WANDB', type=int, default=1, help="Wether to log to wandb.")
+parser.add_argument("--wandb-project", type=str, default="cru-pendulum", help="WandB project name.")
+parser.add_argument("--wandb-entity", type=str, default="tmp", help="WandB username")
+parser.add_argument("--method", type=str, default="CRU", help="Functionless tag for filtering methods in WandB.")
 parser.add_argument("--evaluate_every", type=int, default=1, help="Evaluate validation and test every n epochs.")
 parser.add_argument("--dir_name", type=str, default='./../cache_dir', help="Where is the data cached to.")
+parser.add_argument("--exit_after_generation", type=int, default=0, help="Exit the program after the data has been generated.")
 
 
 args = parser.parse_args()
@@ -161,5 +162,9 @@ if __name__ == '__main__':
 	logger.info(f'parameters: {count_parameters(model)}')
 
 	sanity_check_dataloaders(train_dl, test_dl, valid_dl)
+
+	if args.exit_after_generation:
+		print(f"Data generated and saved to: {args.dir_name}, exitting.")
+		exit(0)
 
 	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl, identifier=identifier, logger=logger)
