@@ -12,6 +12,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# This code was modified by Andrew Warrington as part of "Simplified State
+# Space Layers for Sequence Modeling", Smith, Warrington & Linderman 2022.
+# The original copyright remains with the original authors for the respective
+# source code sections.
 
 import argparse
 from lib.utils import get_logger, count_parameters
@@ -80,6 +85,53 @@ args = parser.parse_args()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 identifier = datetime.datetime.now().strftime("%m-%d--%H-%M-%S")
 
+
+def sanity_check_dataloaders(train_dl, test_dl, valid_dl):
+	"""
+	Place some code in here just for inspecting the dataset and making sure that the
+	dataset being used by CRU is the same as the dataset used by S5.
+
+	:return:
+	"""
+	# Compute some checksums for sanity between CRU and S5.
+	print('\nSanity Checksums:')
+	chksum_dict = {'chksum/obs/train': train_dl.dataset.obs.sum(),
+				   'chksum/obs/test': test_dl.dataset.obs.sum(),
+				   'chksum/obs/val': valid_dl.dataset.obs.sum(),
+				   'chksum/targets/train': train_dl.dataset.targets.sum(),
+				   'chksum/targets/test': test_dl.dataset.targets.sum(),
+				   'chksum/targets/val': valid_dl.dataset.targets.sum(),
+				   'chksum/time_points/train': train_dl.dataset.time_points.sum(),
+				   'chksum/time_points/test': test_dl.dataset.time_points.sum(),
+				   'chksum/time_points/val': valid_dl.dataset.time_points.sum()}
+	wandb.log(chksum_dict, commit=False)
+	print(chksum_dict)
+
+	# # Dump out the actual dataloaders so that we can sanity check them between the CRU and S5 code.
+	# with open('./datasets_cru.p', 'wb') as f:
+	# 	pickle.dump({'train_dl': train_dl,
+	# 				 'valid_dl': valid_dl,
+	# 				 'test_dl': test_dl},
+	# 				f)
+
+	# # More sanity checking -- double check that there are not repeat entries.
+	# for _t1 in train_dl.dataset.targets:
+	# 	for _t2 in valid_dl.dataset.targets:
+	# 		assert not np.all(_t1 == _t2), "failure! train-val"
+	#
+	# for _t1 in train_dl.dataset.targets:
+	# 	for _t2 in test_dl.dataset.targets:
+	# 		assert not np.all(_t1 == _t2), "failure! train-test"
+	#
+	# for _t1 in test_dl.dataset.targets:
+	# 	for _t2 in valid_dl.dataset.targets:
+	# 		assert not np.all(_t1 == _t2), "failure! test-valid"
+	#
+	# for _t1 in train_dl.dataset.targets:
+	# 	for _t2 in train_dl.dataset.targets:
+	# 		assert not np.all(_t1 == _t2), "success! train-train *should* have failed."
+
+
 if __name__ == '__main__':
 
 	torch.manual_seed(args.random_seed)
@@ -108,14 +160,6 @@ if __name__ == '__main__':
 	model = load_model(args)
 	logger.info(f'parameters: {count_parameters(model)}')
 
-	# Dump out the actual dataloaders so that we can sanity check them between the CRU and S5 code.
-	with open('./datasets_cru.p', 'wb') as f:
-		pickle.dump({'train_dl': train_dl,
-					 'valid_dl': valid_dl,
-					 'test_dl': test_dl},
-					f)
+	sanity_check_dataloaders(train_dl, test_dl, valid_dl)
 
 	model.train(train_dl=train_dl, valid_dl=valid_dl, test_dl=test_dl, identifier=identifier, logger=logger)
-
-
-

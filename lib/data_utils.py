@@ -12,6 +12,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# This code was modified by Andrew Warrington as part of "Simplified State
+# Space Layers for Sequence Modeling", Smith, Warrington & Linderman 2022.
+# The original copyright remains with the original authors for the respective
+# source code sections.
+#
+# This code was modified by Andrew Warrington as part of "Simplified State
+# Space Layers for Sequence Modeling", Smith, Warrington & Linderman 2022.
+# The original copyright remains with the original authors for the respective
+# source code sections.
+
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -22,17 +33,15 @@ import os
 from lib.pendulum_generation import generate_pendulums
 
 
-# new code component 
+# new code component
+# Modified by AW: add the validation set and remove other datasets.
 def load_data(args):
     file_path = f'{args.dir_name}/{args.dataset}/'
     
     # Pendulum 
     if args.dataset == 'pendulum':
-        
-        if args.task == 'interpolation':
-            raise NotImplementedError()
-        
-        elif args.task == 'regression':
+
+        if args.task == 'regression':
             if not os.path.exists(os.path.join(file_path, 'pend_regression.npz')):
                 print(f'Generating pendulum trajectories and saving to {file_path} ...')
                 generate_pendulums(file_path, task=args.task)
@@ -46,28 +55,19 @@ def load_data(args):
         else:
             raise Exception('Task not available for Pendulum data')
         collate_fn = None
-        
-    # USHCN
-    elif args.dataset == 'ushcn':
-        raise NotImplementedError()
-    
-    # Physionet
-    elif args.dataset == 'physionet':
+
+    else:
         raise NotImplementedError()
     
     train_dl = DataLoader(train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
     test_dl = DataLoader(test, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
     valid_dl = DataLoader(valid, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
-    print('\nSanity Checksums:')
-    print('Trn obs: ', train_dl.dataset.obs.sum())
-    print('Tst obs: ', test_dl.dataset.obs.sum())
-    print('Val obs: ', valid_dl.dataset.obs.sum(), '\n')
-
     return train_dl, test_dl, valid_dl
 
 
-# new code component 
+# new code component
+# Modified by AW: added validation set.
 class Pendulum_regression(Dataset):
     def __init__(self, file_path, name, mode, sample_rate=0.5, random_state=0):
 
@@ -105,7 +105,8 @@ class Pendulum_regression(Dataset):
         return obs, targets, time_points, obs_valid
 
 
-# new code component 
+# new code component
+# Modified by AW: added validation set.
 def subsample(data, sample_rate, imagepred=False, random_state=0):
     train_obs, train_targets = data["train_obs"], data["train_targets"]
     valid_obs, valid_targets = data["valid_obs"], data["valid_targets"]
@@ -136,7 +137,7 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
             np.zeros_like(x[:, :n, ...]) for x in data_components]
 
     for i in range(train_obs.shape[0]):
-        rng_train = np.random.default_rng(random_state+i+train_obs.shape[0])
+        rng_train = np.random.default_rng(random_state+i+train_obs.shape[0])  # NOTE - maybe we should change seeding to make this more flexible.
         choice = np.sort(rng_train.choice(seq_length, n, replace=False))
         train_time_points.append(choice)
         train_obs_sub[i, ...], train_targets_sub[i, ...] = [
@@ -145,7 +146,7 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
             train_obs_valid_sub[i, ...] = train_obs_valid[i, choice, ...]
 
     for i in range(valid_obs.shape[0]):
-        rng_valid = np.random.default_rng(random_state+i+valid_obs.shape[0])
+        rng_valid = np.random.default_rng(random_state+i+valid_obs.shape[0])  # NOTE - maybe we should change seeding to make this more flexible.
         choice = np.sort(rng_valid.choice(seq_length, n, replace=False))
         valid_time_points.append(choice)
         valid_obs_sub[i, ...], valid_targets_sub[i, ...] = [
@@ -154,7 +155,7 @@ def subsample(data, sample_rate, imagepred=False, random_state=0):
             valid_obs_valid_sub[i, ...] = valid_obs_valid[i, choice, ...]
 
     for i in range(test_obs.shape[0]):
-        rng_test = np.random.default_rng(random_state+i)
+        rng_test = np.random.default_rng(random_state+i)  # NOTE - maybe we should change seeding to make this more flexible.
         choice = np.sort(rng_test.choice(seq_length, n, replace=False))
         test_time_points.append(choice)
         test_obs_sub[i, ...], test_targets_sub[i, ...] = [

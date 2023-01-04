@@ -10,6 +10,13 @@ such Third Party IP, are set forth below.
 Overview
 --------------------------------------------------------------------------
 
+boschresearch/Continuous-Recurrent-Units :
+
+Name:      Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
+URL:       https://github.com/boschresearch/Continuous-Recurrent-Units
+License:   AGPL-3.0 license
+Copyright: Copyright (c) 2022 Robert Bosch GmbH
+
 ALRhub/rkn_share :
 
 Name:      Pytorch RKN Implementation
@@ -34,7 +41,24 @@ Copyright: Copyright (c) 2022 Edward De Brouwer
 Licenses
 --------------------------------------------------------------------------
 
-a. Pytorch RKN Implementation
+a. Modeling Irregular Time Series with Continuous Recurrent Units (CRUs)
+
+Copyright (c) 2022 Robert Bosch GmbH
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+b. Pytorch RKN Implementation
 
 Copyright (c) 2021 Philipp Becker (Autonomous Learning Robots Lab @ KIT)
 
@@ -56,7 +80,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-b. Latent ODEs for Irregularly-Sampled Time Series
+c. Latent ODEs for Irregularly-Sampled Time Series
 
 Copyright (c) 2019 Yulia Rubanova
 
@@ -78,7 +102,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-c. GRU-ODE-Bayes
+d. GRU-ODE-Bayes
 
 Copyright (c) 2022 Edward De Brouwer
 

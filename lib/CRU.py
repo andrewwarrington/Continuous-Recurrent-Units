@@ -17,6 +17,11 @@
 # Copyright (c) 2021 Philipp Becker (Autonomous Learning Robots Lab @ KIT)
 # licensed under MIT License
 # cf. 3rd-party-licenses.txt file in the root directory of this source tree.
+#
+# This code was modified by Andrew Warrington as part of "Simplified State
+# Space Layers for Sequence Modeling", Smith, Warrington & Linderman 2022.
+# The original copyright remains with the original authors for the respective
+# source code sections.
 
 
 import torch
@@ -284,10 +289,6 @@ class CRU(nn.Module):
             epoch_rmse = 0
             epoch_mse = 0
 
-            if self.args.task == 'extrapolation' or self.args.task == 'interpolation':
-                epoch_imput_ll = 0
-                epoch_imput_mse = 0
-
             if self.args.save_intermediates is not None:
                 mask_obs_epoch = []
                 intermediates_epoch = []
@@ -345,20 +346,6 @@ class CRU(nn.Module):
         :param epoch_start: starting epoch
         """
 
-        # Compute some checksums for sanity between CRU and S5.
-        print('\nSanity Checksums:')
-        chksum_dict = {'chksum/obs/train': train_dl.dataset.obs.sum(),
-                       'chksum/obs/test': test_dl.dataset.obs.sum(),
-                       'chksum/obs/val': valid_dl.dataset.obs.sum(),
-                       'chksum/targets/train': train_dl.dataset.targets.sum(),
-                       'chksum/targets/test': test_dl.dataset.targets.sum(),
-                       'chksum/targets/val': valid_dl.dataset.targets.sum(),
-                       'chksum/time_points/train': train_dl.dataset.time_points.sum(),
-                       'chksum/time_points/test': test_dl.dataset.time_points.sum(),
-                       'chksum/time_points/val': valid_dl.dataset.time_points.sum()}
-        wandb.log(chksum_dict, commit=False)
-        print(chksum_dict)
-
         # Add some cheap logging of performance.
         best_train_ll, best_valid_ll, best_test_ll = np.inf, np.inf, np.inf
         best_train_mse, best_valid_mse, best_test_mse = np.inf, np.inf, np.inf
@@ -371,57 +358,19 @@ class CRU(nn.Module):
             return self.args.lr_decay ** epoch
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_update)
-        
-        make_dir(f'../results/tensorboard/{self.args.dataset}')
-        writer = SummaryWriter(f'../results/tensorboard/{self.args.dataset}/{identifier}')
 
         for epoch in range(epoch_start, self.args.epochs):
             start = datetime.now()
-            logger.info(f'Epoch {epoch} starts: {start.strftime("%H:%M:%S")}')
 
             # train
             train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, sum_train_step_time = self.train_epoch(train_dl, optimizer)
             end_training = datetime.now()
-            if self.args.tensorboard:
-                log_to_tensorboard(self,
-                                   writer=writer,
-                                   mode='train',
-                                   metrics=[train_ll, train_rmse, train_mse],
-                                   output=train_output,
-                                   input=train_input,
-                                   intermediates=intermediates,
-                                   epoch=epoch,
-                                   imput_metrics=train_imput_metrics,
-                                   log_rythm=self.args.log_rythm)
+            train_epoch_time = (end_training - start).total_seconds()
 
             # eval
             if (epoch % self.args.evaluate_every == 0) or (epoch == epoch_start) or (epoch == (self.args.epochs - 1)):
                 valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics, _ = self.eval_epoch(valid_dl)
-                if self.args.tensorboard:
-                    log_to_tensorboard(self,
-                                       writer=writer,
-                                       mode='valid',
-                                       metrics=[valid_ll, valid_rmse, valid_mse],
-                                       output=valid_output,
-                                       input=valid_input,
-                                       intermediates=intermediates,
-                                       epoch=epoch,
-                                       imput_metrics=valid_imput_metrics,
-                                       log_rythm=self.args.log_rythm)
-
-                # test
                 test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, sum_eval_step_time = self.eval_epoch(test_dl)
-                if self.args.tensorboard:
-                    log_to_tensorboard(self,
-                                       writer=writer,
-                                       mode='test',
-                                       metrics=[test_ll, test_rmse, test_mse],
-                                       output=test_output,
-                                       input=test_input,
-                                       intermediates=intermediates,
-                                       epoch=epoch,
-                                       imput_metrics=test_imput_metrics,
-                                       log_rythm=self.args.log_rythm)
 
             if valid_mse < best_valid_mse:
                 improved_mse = True
@@ -430,21 +379,6 @@ class CRU(nn.Module):
             else:
                 improved_mse = False
 
-            end = datetime.now()
-            train_epoch_time = (end_training - start).total_seconds()
-            logger.info(f'Training epoch {epoch} took: {train_epoch_time}')
-            logger.info(f'Epoch {epoch} took: {(end - start).total_seconds()}')
-            logger.info(f' train_nll: {train_ll: >9.7f}, train_mse: {train_mse: >9.7f}')
-            logger.info(f' valid_nll: {valid_ll: >9.7f}, valid_mse: {valid_mse: >9.7f}')
-            logger.info(f' test_nll:  {test_ll: >9.7f}, test_mse:  {test_mse: >9.7f}')
-
-            # if improved_mse:
-            logger.info(f' Improved: {improved_mse}, '
-                        f'best_train_mse:   {best_train_mse: >9.7f}, '
-                        f'best_valid_mse:   {best_valid_mse: >9.7f}, '
-                        f'best_test_mse:   {best_test_mse: >9.7f}')
-
-            # logger.info('\n')
             scheduler.step()
 
             wandb.log({

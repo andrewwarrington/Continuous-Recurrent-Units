@@ -17,6 +17,11 @@
 # Copyright (c) 2021 Philipp Becker (Autonomous Learning Robots Lab @ KIT)
 # licensed under MIT License
 # cf. 3rd-party-licenses.txt file in the root directory of this source tree.
+#
+# This code was modified by Andrew Warrington as part of "Simplified State
+# Space Layers for Sequence Modeling", Smith, Warrington & Linderman 2022.
+# The original copyright remains with the original authors for the respective
+# source code sections.
 
 import torch
 from lib.CRUCell import RKNCell, CRUCell
