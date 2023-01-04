@@ -9,8 +9,8 @@ This code was modified for use in _Simplified State Space Layers for Sequence Mo
 for which the preprint is available [here](https://arxiv.org/abs/2208.04933).  We 
 modify and distribute this version of the code permitted under the terms of the 
 original GNU Affero General Public License (Version 3), for which copyright remains 
-with the original authors and all original terms apply equally here.  The source 
-contains code fragments from further repositories, as listed in `3rd-party-licenses.txt`. 
+with the original authors and all original terms apply equally here.  The source
+code also contains fragments from further repositories, as listed in `3rd-party-licenses.txt`. 
 
 We modify the original code in three main ways:
 - We remove nearly all of the code for applications that we did not consider.
@@ -40,9 +40,18 @@ To then actually run the Pendulum regression example, the use the lightly modifi
 ```
 python run_experiment.py --dataset pendulum --task regression -lsd 30 --sample-rate 0.5 --USE-WANDB 1 --wandb-project $WANDB_PROJ_NAME --wandb-entity $WANDB_USER_NAME --dir_name ./../cache_dir
 ```
-where `$WANDB_PROJ_NAME, $WANDB_USER_NAME` are your wandb project name and username respectively.  Scripts for running the exact experiments in the context of S5 are contained in the S5 repository.
+where `$WANDB_PROJ_NAME, $WANDB_USER_NAME` are your wandb project name and username respectively.  
+Scripts for running the exact experiments in the context of S5 are contained in the S5 repository. 
+Running this will generate a file `./../cache_dir/pendulum/pend_regression.npz` which contains the 
+train/val/test data used both by this CRU implementation and the S5 implementation.  On a 
+reasonable GPU, the CRU code takes about 90 minutes to execute.
 
-Running this will generate a file `./../cache_dir/pendulum/pend_regression.npz` which contains the train/val/test data used both by this CRU implementation and the S5 implementation.  On a reasonable GPU, the CRU code takes about 90 minutes to execute.
+You can also execute:
+```
+python run_experiment.py --dataset pendulum --task regression -lsd 30 --sample-rate 0.5 --USE-WANDB 0 --dir_name ./../cache_dir --exit_after_generation 1
+```
+if you just want to generate the data for use with S5.  `--exit_after_generation` means that the 
+CRU code will terminate once the data has been created and saved out.
 
 If you have any questions, feel free to reach out! 
 
