@@ -364,9 +364,12 @@ class CRU(nn.Module):
             start = datetime.now()
 
             # train
+            st = dt()
             train_ll, train_rmse, train_mse, train_output, intermediates, train_input, train_imput_metrics, sum_train_step_time = self.train_epoch(train_dl, optimizer)
             end_training = datetime.now()
             train_epoch_time = (end_training - start).total_seconds()
+            outer_train_step_time = dt() - st
+
 
             # eval
             if (epoch % self.args.evaluate_every == 0) or (epoch == epoch_start) or (epoch == (self.args.epochs - 1)):
@@ -408,9 +411,10 @@ class CRU(nn.Module):
 
                 'train_epoch_time': train_epoch_time,
                 'improved_mse': improved_mse,
-                'sum_train_step_time': sum_train_step_time,
-                'sum_eval_step_time': sum_eval_step_time,
-                "outer_eval_time": outer_eval_time,
+                'timing/sum_train_step_time': sum_train_step_time,
+                'timing/sum_eval_step_time': sum_eval_step_time,
+                "timing/outer_eval_time": outer_eval_time,
+                "timing/outer_train_step_time": outer_train_step_time,
             },
             step=epoch+1)
 
