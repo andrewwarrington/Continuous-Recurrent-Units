@@ -476,6 +476,62 @@ def generate_pendulums(file_path, task, impute_rate=0.5):
         valid_obs = np.expand_dims(valid_obs, -1)
         # End AW modular code.
 
+        # More sanity checking -- double check that there are not repeat entries.
+        for _t1 in train_obs:
+        	for _t2 in valid_obs:
+        		assert not np.isclose(_t1, _t2).all(), "failure! train-val"
+
+        for _t1 in train_obs:
+        	for _t2 in test_obs:
+        		assert not np.isclose(_t1, _t2).all(), "failure! train-test"
+
+        for _t1 in test_obs:
+        	for _t2 in valid_obs:
+        		assert not np.isclose(_t1, _t2).all(), "failure! test-valid"
+
+        p = False
+        for _t1 in train_obs:
+
+            if p:
+                break
+
+            for _t2 in train_obs:
+                try:
+                    assert not np.isclose(_t1, _t2).all(), "success! train-train *should* have failed."
+                except:
+                    p = True
+                    break
+                assert False,  "This should never be hit."
+
+        # More sanity checking -- double check that there are not repeat entries.
+        for _t1 in train_targets:
+            for _t2 in valid_targets:
+                assert not np.isclose(_t1, _t2).all(), "failure! train-val"
+
+        for _t1 in train_targets:
+            for _t2 in test_targets:
+                assert not np.isclose(_t1, _t2).all(), "failure! train-test"
+
+        for _t1 in test_targets:
+            for _t2 in valid_targets:
+                assert not np.isclose(_t1, _t2).all(), "failure! test-valid"
+
+        p = False
+        for _t1 in train_targets:
+
+            if p:
+                break
+
+            for _t2 in train_targets:
+                try:
+                    assert not np.isclose(_t1, _t2).all(), "success! train-train *should* have failed."
+                except:
+                    p = True
+                    break
+                assert False,  "This should never be hit."
+
+        print('Sanity checks passed.')
+
         # Save out.
         if not os.path.exists(file_path):
             os.makedirs(file_path)

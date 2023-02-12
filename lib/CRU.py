@@ -358,6 +358,7 @@ class CRU(nn.Module):
             return self.args.lr_decay ** epoch
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_update)
+        outer_eval_time = 0.0
 
         for epoch in range(epoch_start, self.args.epochs):
             start = datetime.now()
@@ -369,8 +370,16 @@ class CRU(nn.Module):
 
             # eval
             if (epoch % self.args.evaluate_every == 0) or (epoch == epoch_start) or (epoch == (self.args.epochs - 1)):
+
+                st = dt()
                 valid_ll, valid_rmse, valid_mse, valid_output, intermediates, valid_input, valid_imput_metrics, _ = self.eval_epoch(valid_dl)
+                outer_eval_time = dt() - st
+                print("Outer epoch evaluation time: ", outer_eval_time)
+
+                st = dt()
                 test_ll, test_rmse, test_mse, test_output, intermediates, test_input, test_imput_metrics, sum_eval_step_time = self.eval_epoch(test_dl)
+                outer_eval_time = dt() - st
+                print("Outer epoch evaluation time: ", outer_eval_time)
 
             if valid_mse < best_valid_mse:
                 improved_mse = True
@@ -401,6 +410,7 @@ class CRU(nn.Module):
                 'improved_mse': improved_mse,
                 'sum_train_step_time': sum_train_step_time,
                 'sum_eval_step_time': sum_eval_step_time,
+                "outer_eval_time": outer_eval_time,
             },
             step=epoch+1)
 
