@@ -394,23 +394,16 @@ class CRU(nn.Module):
             scheduler.step()
 
             wandb.log({
-                'epoch': epoch,
                 'Training Loss': train_ll,
                 'Val Loss': valid_ll,
-                'Test Loss': test_ll,
-                'Training Accuracy': - train_mse,
                 'Val Accuracy': - valid_mse,
+                'Test Loss': test_ll,
                 'Test Accuracy': - test_mse,
+                'Best Test Accuracy': - best_test_mse,
+                'Best Test Loss': best_test_ll,
 
-                'best_train_loss': best_train_ll,
-                'best_valid_loss': best_valid_ll,
-                'best_test_loss': best_test_ll,
-                'best_train_acc': - best_train_mse,
-                'best_valid_acc': - best_valid_mse,
-                'best_test_acc': - best_test_mse,
-
-                'train_epoch_time': train_epoch_time,
-                'improved_mse': improved_mse,
+                'cru_specific/train_epoch_time': train_epoch_time,
+                'cru_specific/improved_mse': improved_mse,
                 'timing/sum_train_step_time': sum_train_step_time,
                 'timing/sum_eval_step_time': sum_eval_step_time,
                 "timing/outer_eval_time": outer_eval_time,
