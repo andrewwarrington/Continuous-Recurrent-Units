@@ -418,6 +418,11 @@ class CRU(nn.Module):
                 wandb.run.summary["Best Test Loss"] = best_test_ll
                 wandb.run.summary["Best Test Accuracy"] = - best_test_mse
 
+            wandb.run.summary["Sum Eval Step Time"] = sum_eval_step_time
+            wandb.run.summary["Outer Eval Step Time"] = outer_eval_time
+            wandb.run.summary["Sum Train Step Time"] = sum_train_step_time
+            wandb.run.summary["Outer Train Step Time"] = outer_train_step_time
+
         logger.info(f' best_train_nll:   {best_train_ll: >9.7f}, '
                     f'best_valid_nll:   {best_valid_ll: >9.7f}, '
                     f'best_test_nll:   {best_test_ll: >9.7f}')
